@@ -1,0 +1,761 @@
+[
+  {
+    "title": "Fix File Copying Error",
+    "create_time": 1686999489.093686,
+    "update_time": 1687001654.0,
+    "mapping": {
+      "057dceec-8a2c-487d-ba75-304cb2f76940": {
+        "id": "057dceec-8a2c-487d-ba75-304cb2f76940",
+        "message": {
+          "id": "057dceec-8a2c-487d-ba75-304cb2f76940",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999489.093926,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              ""
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa105ca-b208-46b8-8142-d24265a7094c",
+        "children": [
+          "aaa2c4b9-7e36-4cb0-af36-012af2020cb5"
+        ]
+      },
+      "aaa105ca-b208-46b8-8142-d24265a7094c": {
+        "id": "aaa105ca-b208-46b8-8142-d24265a7094c",
+        "message": null,
+        "parent": null,
+        "children": [
+          "057dceec-8a2c-487d-ba75-304cb2f76940"
+        ]
+      },
+      "aaa2c4b9-7e36-4cb0-af36-012af2020cb5": {
+        "id": "aaa2c4b9-7e36-4cb0-af36-012af2020cb5",
+        "message": {
+          "id": "aaa2c4b9-7e36-4cb0-af36-012af2020cb5",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999489.105853,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "import subprocess\nimport shutil\nimport os\nimport sqlite3\nimport random\nfrom flask import Flask\nimport logging\nfrom logging.handlers import RotatingFileHandler\nimport shutil\nfrom flask import Flask, render_template, url_for, request, redirect, flash, send_file, render_template_string\n\napp = Flask(__name__)\n# Create a logger object\nlogger = logging.getLogger(__name__)\nlogger.setLevel(logging.DEBUG)\n\n# Create a formatter for the log messages\nformatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')\n\n# Create a file handler to write log messages to a file\nfile_handler = RotatingFileHandler('Logs/QuickVid.log', maxBytes=10000, backupCount=1)\nfile_handler.setLevel(logging.DEBUG)\nfile_handler.setFormatter(formatter)\n\n# Add the file handler to the logger\nlogger.addHandler(file_handler)\n\n# Set up logging for the Flask app\napp.logger.addHandler(file_handler)\n# Create a logger object\n\n\n@app.route('/')\ndef home():\n    data = render_template_string(\"<a href='{{ url_for('indexB') }}'>Create a Video</a><br />\")\n    return data\n\n@app.route('/indexB')\ndef indexB():\n    # Get the current date and time\n    current_datetime = subprocess.check_output([\"date\", \"+%Y-%m-%d_%H-%M-%S\"]).decode().strip()\n    \n    # Create a filename with the current date and time\n    filename = f\"EXPERIMENT/_file_{current_datetime}.mp4\"\n    \n    # Set the paths and filenames\n    #DIR = \"static/milestones_resources/alien_files/\"\n    DIR = \"static/milestones_resources/examin/\"\n    directory_name = os.path.basename(DIR.rstrip('/'))\n    MUSIC =\"OLD_resources/Devil_s_Organ-Jimena_Contreras.mp3\"\n    # Update VIDEO and FINAL filenames\n    VIDEO = f\"EXP/{directory_name}.mp4\"\n    FINAL = f\"EXP/file_{current_datetime}store.mp4\"\n    TExt = \"TEXT TEST 12345\"\n    logger.debug('This is a debug message: %s', TExt)\n    logger.debug('This is FINAL: %s', FINAL)\n    # Get all filenames in the directory\n    filenames = os.listdir(DIR)\n    logger.debug('This is filenames: %s', filenames)\n    \n    # Sort the filenames in alphabetical order\n    filenames.sort()\n    \n    # Shuffle the filenames randomly\n    random.shuffle(filenames)\n    logger.debug('This is shuffled filenames: %s', filenames)\n\n    # Generate a temporary directory to store renamed files\n    temp_dir = \"temp\"\n    \n    # Rename files with leading zeros\n    # Rename files with leading zeros\n    for i, filename in enumerate(filenames, start=1):\n        print(f\"FILENAME:,{DIR}{filename}\")\n        new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n        logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{new_filename}\")\n\n    \n    # Execute the FFmpeg command to create VIDEO\n    subprocess.call([\n        \"ffmpeg\", \"-hide_banner\", \"-framerate\", \"5\", \"-i\", \"temp/%05d.jpg\", \"-c:v\", \"libx264\",\n        \"-r\", \"30\", \"-pix_fmt\", \"yuv420p\", \"-y\", VIDEO\n    ])\n    \n    # Remove the temporary directory and files\n    for filename in os.listdir(temp_dir):\n        os.remove(os.path.join(temp_dir, filename))\n    \n    # Generate the image with text\n    TITLEimage = f\"{DIR}{directory_name}\"\n    subprocess.call([\n        \"ffmpeg\", \"-i\", TITLEimage,\n        \"-vf\", f\"drawtext=text='{directory_name}':fontfile=/home/jack/fonts/freesansbold.ttf:fontsize=45:fontcolor=white:x=(w-text_w)/2:y=((h-text_h)/2)-300\",\n        \"-y\", \"static/result_image_with_text.jpg\"\n    ])\n\n    # Concatenate the image with text and the video\n    subprocess.call([\n        \"ffmpeg\", \"-loop\", \"1\", \"-i\", \"static/text/result_image_with_text.jpg\",\n        \"-vf\", \"fade=t=in:st=0:d=1:alpha=1, fade=t=out:st=3:d=1:alpha=1\",\n        \"-c:v\", \"libx264\", \"-t\", \"4\", \"-y\", \"static/text/result_image_with_text.mp4\"\n    ])\n    \n    subprocess.call([\n        \"ffmpeg\", \"-i\", \"static/text/result_image_with_text.mp4\", \"-i\", filename,\n        \"-filter_complex\", \"[0:v] [1:v] concat=n=2:v=1:a=0 [v]\",\n        \"-map\", \"[v]\", \"-t\", \"59\", \"-y\", \"EXP/titled.mp4\"\n    ])\n    \n    random_number = subprocess.check_output([\"shuf\", \"-i\", \"100-3099\", \"-n\", \"1\"]).decode().strip()\n    subprocess.call([\n        \"ffmpeg\", \"-ss\", \"0\", \"-i\", \"EXP/titled.mp4\",\n        \"-ss\", random_number, \"-i\", MUSIC,\n        \"-map\", \"0:v\", \"-map\", \"1:a\",\n        \"-c:v\", \"copy\", \"-c:a\", \"aac\", \"-shortest\", \"-t\", \"58\", \"-y\", FINAL\n    ])\n    \n    \n    vid = \"static/videos/temp.mp4\"\n    \n    return render_template('indexB.html', final_video=FINAL)\n\n\nDATABASE = 'image_database.db'\nSTATIC_FOLDER = 'static'\n\ndef create_database():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    c.execute('''CREATE TABLE IF NOT EXISTS image_directories\n                 (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, jpg_count INT)''')\n    conn.commit()\n    conn.close()\n\ndef scan_directories():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    for root, dirs, files in os.walk(STATIC_FOLDER):\n        jpg_count = len([file for file in files if file.endswith('.jpg')])\n        if jpg_count > 40:\n            print(root, jpg_count)\n            directory = os.path.relpath(root, STATIC_FOLDER)\n            c.execute(\"INSERT INTO image_directories (directory, jpg_count) VALUES (?, ?)\", (directory, jpg_count))\n    conn.commit()\n    conn.close()\n\n@app.route('/update_database')\ndef update_database():\n    create_database()\n    scan_directories()\n    return 'Database Updated'\n\nif __name__ == '__main__':\n    app.run(debug=True)\nERROR: not copy to temp"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "057dceec-8a2c-487d-ba75-304cb2f76940",
+        "children": [
+          "d1e8f96e-9acc-4681-9df3-eb3ebfe1a12f"
+        ]
+      },
+      "d1e8f96e-9acc-4681-9df3-eb3ebfe1a12f": {
+        "id": "d1e8f96e-9acc-4681-9df3-eb3ebfe1a12f",
+        "message": {
+          "id": "d1e8f96e-9acc-4681-9df3-eb3ebfe1a12f",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999492.591989,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "The error you're encountering is due to a logical mistake in your code. In the section where you're trying to copy files to the temporary directory, you have placed the `shutil.copy` command outside the loop. As a result, it only copies the last file in the `filenames` list. To fix this issue, you need to indent the `shutil.copy` command so that it is executed for each file in the loop. Here's the corrected code:\n\n```python\n# Rename files with leading zeros\nfor i, filename in enumerate(filenames, start=1):\n    print(f\"FILENAME:,{DIR}{filename}\")\n    new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n    logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{new_filename}\")\n```\n\nBy indenting the `shutil.copy` command, it will be executed for each file in the `filenames` list, and the files will be copied to the temporary directory correctly."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2c4b9-7e36-4cb0-af36-012af2020cb5",
+        "children": [
+          "aaa26d18-10f7-4509-a509-8c84ef1b257d"
+        ]
+      },
+      "aaa26d18-10f7-4509-a509-8c84ef1b257d": {
+        "id": "aaa26d18-10f7-4509-a509-8c84ef1b257d",
+        "message": {
+          "id": "aaa26d18-10f7-4509-a509-8c84ef1b257d",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999761.931215,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "File \"/mnt/HDD500/FLASK/QuickVid.py\", line 77, in indexB\n    shutil.copy(f\"{DIR}{filename}\", f\"{new_filename}\")\n  File \"/usr/lib/python3.9/shutil.py\", line 418, in copy\n    copyfile(src, dst, follow_symlinks=follow_symlinks)\n  File \"/usr/lib/python3.9/shutil.py\", line 264, in copyfile\n    with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:\nIsADirectoryError: [Errno 21] Is a directory: 'static/milestones_resources/examin/temp'\n"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "d1e8f96e-9acc-4681-9df3-eb3ebfe1a12f",
+        "children": [
+          "887a74dc-71da-45f9-b063-cff7d094c5e8"
+        ]
+      },
+      "887a74dc-71da-45f9-b063-cff7d094c5e8": {
+        "id": "887a74dc-71da-45f9-b063-cff7d094c5e8",
+        "message": {
+          "id": "887a74dc-71da-45f9-b063-cff7d094c5e8",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999765.967312,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "The error message indicates that the destination path you provided for copying the files (`'static/milestones_resources/examin/temp'`) is a directory instead of a specific file path. \n\nTo resolve this issue, you need to ensure that the destination path is a file path, including the desired filename. You can modify the `new_filename` variable to include the destination directory and the filename. Here's the updated code:\n\n```python\n# Rename files with leading zeros\nfor i, filename in enumerate(filenames, start=1):\n    print(f\"FILENAME:,{DIR}{filename}\")\n    new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n    logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n```\n\nBy modifying the `shutil.copy` line to use the destination directory (`DIR`) along with the `new_filename`, it ensures that the files are copied to the correct file path in the temporary directory."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa26d18-10f7-4509-a509-8c84ef1b257d",
+        "children": [
+          "aaa20a7c-a9b7-48bc-b653-50aafd4d05cf"
+        ]
+      },
+      "aaa20a7c-a9b7-48bc-b653-50aafd4d05cf": {
+        "id": "aaa20a7c-a9b7-48bc-b653-50aafd4d05cf",
+        "message": {
+          "id": "aaa20a7c-a9b7-48bc-b653-50aafd4d05cf",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999845.623613,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "\n    File \"/mnt/HDD500/FLASK/QuickVid.py\", line 78, in indexB\n\n    shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n    File \"/usr/lib/python3.9/shutil.py\", line 418, in copy\n\n    copyfile(src, dst, follow_symlinks=follow_symlinks)\n\n    File \"/usr/lib/python3.9/shutil.py\", line 264, in copyfile\n\n    with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:\n\n    IsADirectoryError: [Errno 21] Is a directory: 'static/milestones_resources/examin/temp'\n"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "887a74dc-71da-45f9-b063-cff7d094c5e8",
+        "children": [
+          "b03b70bf-60f7-42cc-83ea-3b8725095a23"
+        ]
+      },
+      "b03b70bf-60f7-42cc-83ea-3b8725095a23": {
+        "id": "b03b70bf-60f7-42cc-83ea-3b8725095a23",
+        "message": {
+          "id": "b03b70bf-60f7-42cc-83ea-3b8725095a23",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1686999849.795412,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "I apologize for the confusion. It seems that the `temp` directory already exists within the `static/milestones_resources/examin` directory, and you are attempting to copy files into it. However, `shutil.copy` expects the destination path to be the complete file path, including the filename.\n\nTo resolve the issue, you need to modify the destination path to include the complete file path, including the `temp` directory. Here's the updated code:\n\n```python\n# Rename files with leading zeros\nfor i, filename in enumerate(filenames, start=1):\n    print(f\"FILENAME:,{DIR}{filename}\")\n    new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n    logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n```\n\nBy providing the complete file path for the destination, including the `temp` directory, the files will be copied to the correct location."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa20a7c-a9b7-48bc-b653-50aafd4d05cf",
+        "children": [
+          "aaa2f248-265c-41c1-9163-37cba78a8154"
+        ]
+      },
+      "aaa2f248-265c-41c1-9163-37cba78a8154": {
+        "id": "aaa2f248-265c-41c1-9163-37cba78a8154",
+        "message": {
+          "id": "aaa2f248-265c-41c1-9163-37cba78a8154",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000118.915768,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "how do I remove the temp"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "b03b70bf-60f7-42cc-83ea-3b8725095a23",
+        "children": [
+          "13b6bba1-7798-43c5-b159-0cb9b639bccb"
+        ]
+      },
+      "13b6bba1-7798-43c5-b159-0cb9b639bccb": {
+        "id": "13b6bba1-7798-43c5-b159-0cb9b639bccb",
+        "message": {
+          "id": "13b6bba1-7798-43c5-b159-0cb9b639bccb",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000122.39598,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "To remove the temporary directory and its contents after copying the files, you can use the `shutil.rmtree()` function. Here's an example of how you can remove the `temp` directory:\n\n```python\nimport shutil\nimport os\n\n# ...\n\n# Remove the temporary directory and files\nshutil.rmtree(temp_dir)\n```\n\nBy calling `shutil.rmtree(temp_dir)`, the `temp` directory and all its contents will be deleted.\n\nMake sure to place this code after you have finished using the temporary files and no longer need them."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2f248-265c-41c1-9163-37cba78a8154",
+        "children": [
+          "aaa2589d-30b0-4005-9b1b-ae5c88411ddb"
+        ]
+      },
+      "aaa2589d-30b0-4005-9b1b-ae5c88411ddb": {
+        "id": "aaa2589d-30b0-4005-9b1b-ae5c88411ddb",
+        "message": {
+          "id": "aaa2589d-30b0-4005-9b1b-ae5c88411ddb",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000250.169021,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "# Generate a temporary directory to store renamed files\n    temp_dir = \"temp\"\n    \n    # Rename files with leading zeros\n    # Rename files with leading zeros\n    # Rename files with leading zeros\n    for i, filename in enumerate(filenames, start=1):\n        print(f\"FILENAME:,{DIR}{filename}\")\n        new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n        logger.debug('This is filename: %s', filename)\n        shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "13b6bba1-7798-43c5-b159-0cb9b639bccb",
+        "children": [
+          "4d799394-7ba4-4479-851c-3cb0cf125829"
+        ]
+      },
+      "4d799394-7ba4-4479-851c-3cb0cf125829": {
+        "id": "4d799394-7ba4-4479-851c-3cb0cf125829",
+        "message": {
+          "id": "4d799394-7ba4-4479-851c-3cb0cf125829",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000289.079822,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "If you want to remove the `temp` directory and its contents after the files have been copied, you can add the following code after the loop:\n\n```python\n# Remove the temporary directory and files\nshutil.rmtree(temp_dir)\n```\n\nHere's the updated code:\n\n```python\n# Generate a temporary directory to store renamed files\ntemp_dir = \"temp\"\n\n# Rename files with leading zeros\nfor i, filename in enumerate(filenames, start=1):\n    print(f\"FILENAME:,{DIR}{filename}\")\n    new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n    logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n# Remove the temporary directory and files\nshutil.rmtree(temp_dir)\n```\n\nAfter the loop finishes, `shutil.rmtree(temp_dir)` will delete the `temp` directory and its contents. Make sure to place this code after you have finished using the temporary files."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2589d-30b0-4005-9b1b-ae5c88411ddb",
+        "children": [
+          "aaa2efc5-e38c-4097-814b-f58487a86283"
+        ]
+      },
+      "aaa2efc5-e38c-4097-814b-f58487a86283": {
+        "id": "aaa2efc5-e38c-4097-814b-f58487a86283",
+        "message": {
+          "id": "aaa2efc5-e38c-4097-814b-f58487a86283",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000318.800855,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "import subprocess\nimport shutil\nimport os\nimport sqlite3\nimport random\nfrom flask import Flask\nimport logging\nfrom logging.handlers import RotatingFileHandler\nimport shutil\nfrom flask import Flask, render_template, url_for, request, redirect, flash, send_file, render_template_string\n\napp = Flask(__name__)\n# Create a logger object\nlogger = logging.getLogger(__name__)\nlogger.setLevel(logging.DEBUG)\n\n# Create a formatter for the log messages\nformatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')\n\n# Create a file handler to write log messages to a file\nfile_handler = RotatingFileHandler('Logs/QuickVid.log', maxBytes=10000, backupCount=1)\nfile_handler.setLevel(logging.DEBUG)\nfile_handler.setFormatter(formatter)\n\n# Add the file handler to the logger\nlogger.addHandler(file_handler)\n\n# Set up logging for the Flask app\napp.logger.addHandler(file_handler)\n# Create a logger object\n\n\n@app.route('/')\ndef home():\n    data = render_template_string(\"<a href='{{ url_for('indexB') }}'>Create a Video</a><br />\")\n    return data\n\n@app.route('/indexB')\ndef indexB():\n    # Get the current date and time\n    current_datetime = subprocess.check_output([\"date\", \"+%Y-%m-%d_%H-%M-%S\"]).decode().strip()\n    \n    # Create a filename with the current date and time\n    filename = f\"EXPERIMENT/_file_{current_datetime}.mp4\"\n    \n    # Set the paths and filenames\n    #DIR = \"static/milestones_resources/alien_files/\"\n    DIR = \"static/milestones_resources/examin/\"\n    directory_name = os.path.basename(DIR.rstrip('/'))\n    MUSIC =\"OLD_resources/Devil_s_Organ-Jimena_Contreras.mp3\"\n    # Update VIDEO and FINAL filenames\n    VIDEO = f\"EXP/{directory_name}.mp4\"\n    FINAL = f\"EXP/file_{current_datetime}store.mp4\"\n    TExt = \"TEXT TEST 12345\"\n    logger.debug('This is a debug message: %s', TExt)\n    logger.debug('This is FINAL: %s', FINAL)\n    # Get all filenames in the directory\n    filenames = os.listdir(DIR)\n    logger.debug('This is filenames: %s', filenames)\n    \n    # Sort the filenames in alphabetical order\n    filenames.sort()\n    \n    # Shuffle the filenames randomly\n    random.shuffle(filenames)\n    logger.debug('This is shuffled filenames: %s', filenames)\n \n    # Generate a temporary directory to store renamed files\n    temp_dir = \"temp\"\n    \n    # Rename files with leading zeros\n    # Rename files with leading zeros\n    # Rename files with leading zeros\n    for i, filename in enumerate(filenames, start=1):\n        print(f\"FILENAME:,{DIR}{filename}\")\n        new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n        logger.debug('This is filename: %s', filename)\n        shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n\n\n    \n    # Execute the FFmpeg command to create VIDEO\n    subprocess.call([\n        \"ffmpeg\", \"-hide_banner\", \"-framerate\", \"5\", \"-i\", \"temp/%05d.jpg\", \"-c:v\", \"libx264\",\n        \"-r\", \"30\", \"-pix_fmt\", \"yuv420p\", \"-y\", VIDEO\n    ])\n    \n    # Remove the temporary directory and files\n    for filename in os.listdir(temp_dir):\n        os.remove(os.path.join(temp_dir, filename))\n    \n    # Generate the image with text\n    TITLEimage = f\"{DIR}{directory_name}\"\n    subprocess.call([\n        \"ffmpeg\", \"-i\", TITLEimage,\n        \"-vf\", f\"drawtext=text='{directory_name}':fontfile=/home/jack/fonts/freesansbold.ttf:fontsize=45:fontcolor=white:x=(w-text_w)/2:y=((h-text_h)/2)-300\",\n        \"-y\", \"static/result_image_with_text.jpg\"\n    ])\n\n    # Concatenate the image with text and the video\n    subprocess.call([\n        \"ffmpeg\", \"-loop\", \"1\", \"-i\", \"static/text/result_image_with_text.jpg\",\n        \"-vf\", \"fade=t=in:st=0:d=1:alpha=1, fade=t=out:st=3:d=1:alpha=1\",\n        \"-c:v\", \"libx264\", \"-t\", \"4\", \"-y\", \"static/text/result_image_with_text.mp4\"\n    ])\n    \n    subprocess.call([\n        \"ffmpeg\", \"-i\", \"static/text/result_image_with_text.mp4\", \"-i\", filename,\n        \"-filter_complex\", \"[0:v] [1:v] concat=n=2:v=1:a=0 [v]\",\n        \"-map\", \"[v]\", \"-t\", \"59\", \"-y\", \"EXP/titled.mp4\"\n    ])\n    \n    random_number = subprocess.check_output([\"shuf\", \"-i\", \"100-3099\", \"-n\", \"1\"]).decode().strip()\n    subprocess.call([\n        \"ffmpeg\", \"-ss\", \"0\", \"-i\", \"EXP/titled.mp4\",\n        \"-ss\", random_number, \"-i\", MUSIC,\n        \"-map\", \"0:v\", \"-map\", \"1:a\",\n        \"-c:v\", \"copy\", \"-c:a\", \"aac\", \"-shortest\", \"-t\", \"58\", \"-y\", FINAL\n    ])\n    \n    \n    vid = \"static/videos/temp.mp4\"\n\n    return render_template('indexB.html', final_video=FINAL)\n\n\nDATABASE = 'image_database.db'\nSTATIC_FOLDER = 'static'\n\ndef create_database():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    c.execute('''CREATE TABLE IF NOT EXISTS image_directories\n                 (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, jpg_count INT)''')\n    conn.commit()\n    conn.close()\n\ndef scan_directories():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    for root, dirs, files in os.walk(STATIC_FOLDER):\n        jpg_count = len([file for file in files if file.endswith('.jpg')])\n        if jpg_count > 40:\n            print(root, jpg_count)\n            directory = os.path.relpath(root, STATIC_FOLDER)\n            c.execute(\"INSERT INTO image_directories (directory, jpg_count) VALUES (?, ?)\", (directory, jpg_count))\n    conn.commit()\n    conn.close()\n\n@app.route('/update_database')\ndef update_database():\n    create_database()\n    scan_directories()\n    return 'Database Updated'\n\nif __name__ == '__main__':\n    app.run(debug=True)\n"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "4d799394-7ba4-4479-851c-3cb0cf125829",
+        "children": [
+          "b840faa3-a2d9-4cfa-8b85-36f75cd6a852"
+        ]
+      },
+      "b840faa3-a2d9-4cfa-8b85-36f75cd6a852": {
+        "id": "b840faa3-a2d9-4cfa-8b85-36f75cd6a852",
+        "message": {
+          "id": "b840faa3-a2d9-4cfa-8b85-36f75cd6a852",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000323.025951,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "In your provided code, you can remove the `temp` directory and its contents after the files have been copied by adding the following code after the loop:\n\n```python\n# Remove the temporary directory and files\nshutil.rmtree(temp_dir)\n```\n\nHere's the updated code snippet:\n\n```python\n# Rename files with leading zeros\nfor i, filename in enumerate(filenames, start=1):\n    print(f\"FILENAME:,{DIR}{filename}\")\n    new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n    logger.debug('This is filename: %s', filename)\n    shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n# Remove the temporary directory and files\nshutil.rmtree(temp_dir)\n```\n\nPlace this code after the loop that renames the files with leading zeros. After the loop finishes, `shutil.rmtree(temp_dir)` will delete the `temp` directory and its contents. Make sure to place this code after you have finished using the temporary files."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2efc5-e38c-4097-814b-f58487a86283",
+        "children": [
+          "aaa23a46-c82b-492a-96e4-accca3b83293"
+        ]
+      },
+      "aaa23a46-c82b-492a-96e4-accca3b83293": {
+        "id": "aaa23a46-c82b-492a-96e4-accca3b83293",
+        "message": {
+          "id": "aaa23a46-c82b-492a-96e4-accca3b83293",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000348.784505,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "could you resend the script complete"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "b840faa3-a2d9-4cfa-8b85-36f75cd6a852",
+        "children": [
+          "59035b18-3b22-4514-a7d7-3d84c9fd93f2"
+        ]
+      },
+      "59035b18-3b22-4514-a7d7-3d84c9fd93f2": {
+        "id": "59035b18-3b22-4514-a7d7-3d84c9fd93f2",
+        "message": {
+          "id": "59035b18-3b22-4514-a7d7-3d84c9fd93f2",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000369.566951,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Certainly! Here's the complete script with the addition of removing the temporary directory and files:\n\n```python\nimport subprocess\nimport shutil\nimport os\nimport sqlite3\nimport random\nfrom flask import Flask\nimport logging\nfrom logging.handlers import RotatingFileHandler\nimport shutil\nfrom flask import Flask, render_template, url_for, request, redirect, flash, send_file, render_template_string\n\napp = Flask(__name__)\n# Create a logger object\nlogger = logging.getLogger(__name__)\nlogger.setLevel(logging.DEBUG)\n\n# Create a formatter for the log messages\nformatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')\n\n# Create a file handler to write log messages to a file\nfile_handler = RotatingFileHandler('Logs/QuickVid.log', maxBytes=10000, backupCount=1)\nfile_handler.setLevel(logging.DEBUG)\nfile_handler.setFormatter(formatter)\n\n# Add the file handler to the logger\nlogger.addHandler(file_handler)\n\n# Set up logging for the Flask app\napp.logger.addHandler(file_handler)\n# Create a logger object\n\n\n@app.route('/')\ndef home():\n    data = render_template_string(\"<a href='{{ url_for('indexB') }}'>Create a Video</a><br />\")\n    return data\n\n@app.route('/indexB')\ndef indexB():\n    # Get the current date and time\n    current_datetime = subprocess.check_output([\"date\", \"+%Y-%m-%d_%H-%M-%S\"]).decode().strip()\n    \n    # Create a filename with the current date and time\n    filename = f\"EXPERIMENT/_file_{current_datetime}.mp4\"\n    \n    # Set the paths and filenames\n    #DIR = \"static/milestones_resources/alien_files/\"\n    DIR = \"static/milestones_resources/examin/\"\n    directory_name = os.path.basename(DIR.rstrip('/'))\n    MUSIC =\"OLD_resources/Devil_s_Organ-Jimena_Contreras.mp3\"\n    # Update VIDEO and FINAL filenames\n    VIDEO = f\"EXP/{directory_name}.mp4\"\n    FINAL = f\"EXP/file_{current_datetime}store.mp4\"\n    TExt = \"TEXT TEST 12345\"\n    logger.debug('This is a debug message: %s', TExt)\n    logger.debug('This is FINAL: %s', FINAL)\n    # Get all filenames in the directory\n    filenames = os.listdir(DIR)\n    logger.debug('This is filenames: %s', filenames)\n    \n    # Sort the filenames in alphabetical order\n    filenames.sort()\n    \n    # Shuffle the filenames randomly\n    random.shuffle(filenames)\n    logger.debug('This is shuffled filenames: %s', filenames)\n \n    # Generate a temporary directory to store renamed files\n    temp_dir = \"temp\"\n    \n    # Rename files with leading zeros\n    for i, filename in enumerate(filenames, start=1):\n        print(f\"FILENAME:,{DIR}{filename}\")\n        new_filename = f\"{temp_dir}/{i:05d}.jpg\"\n        logger.debug('This is filename: %s', filename)\n        shutil.copy(f\"{DIR}{filename}\", f\"{DIR}{new_filename}\")\n\n    # Remove the temporary directory and files\n    shutil.rmtree(temp_dir)\n    \n    # Execute the FFmpeg command to create VIDEO\n    subprocess.call([\n        \"ffmpeg\", \"-hide_banner\", \"-framerate\", \"5\", \"-i\", \"temp/%05d.jpg\", \"-c:v\", \"libx264\",\n        \"-r\", \"30\", \"-pix_fmt\", \"yuv420p\", \"-y\", VIDEO\n    ])\n    \n    # Generate the image with text\n    TITLEimage = f\"{DIR}{directory_name}\"\n    subprocess.call([\n        \""
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": false,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "max_tokens"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa23a46-c82b-492a-96e4-accca3b83293",
+        "children": [
+          "06d2ad30-25be-4813-9392-10e60c55fec3"
+        ]
+      },
+      "06d2ad30-25be-4813-9392-10e60c55fec3": {
+        "id": "06d2ad30-25be-4813-9392-10e60c55fec3",
+        "message": {
+          "id": "06d2ad30-25be-4813-9392-10e60c55fec3",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687000990.366327,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "ffmpeg\", \"-i\", TITLEimage,\n        \"-vf\", f\"drawtext=text='{directory_name}':fontfile=/home/jack/fonts/freesansbold.ttf:fontsize=45:fontcolor=white:x=(w-text_w)/2:y=((h-text_h)/2)-300\",\n        \"-y\", \"static/result_image_with_text.jpg\"\n    ])\n\n    # Concatenate the image with text and the video\n    subprocess.call([\n        \"ffmpeg\", \"-loop\", \"1\", \"-i\", \"static/text/result_image_with_text.jpg\",\n        \"-vf\", \"fade=t=in:st=0:d=1:alpha=1, fade=t=out:st=3:d=1:alpha=1\",\n        \"-c:v\", \"libx264\", \"-t\", \"4\", \"-y\", \"static/text/result_image_with_text.mp4\"\n    ])\n    \n    subprocess.call([\n        \"ffmpeg\", \"-i\", \"static/text/result_image_with_text.mp4\", \"-i\", filename,\n        \"-filter_complex\", \"[0:v] [1:v] concat=n=2:v=1:a=0 [v]\",\n        \"-map\", \"[v]\", \"-t\", \"59\", \"-y\", \"EXP/titled.mp4\"\n    ])\n    \n    random_number = subprocess.check_output([\"shuf\", \"-i\", \"100-3099\", \"-n\", \"1\"]).decode().strip()\n    subprocess.call([\n        \"ffmpeg\", \"-ss\", \"0\", \"-i\", \"EXP/titled.mp4\",\n        \"-ss\", random_number, \"-i\", MUSIC,\n        \"-map\", \"0:v\", \"-map\", \"1:a\",\n        \"-c:v\", \"copy\", \"-c:a\", \"aac\", \"-shortest\", \"-t\", \"58\", \"-y\", FINAL\n    ])\n    \n    \n    vid = \"static/videos/temp.mp4\"\n\n    return render_template('indexB.html', final_video=FINAL)\n\n\nDATABASE = 'image_database.db'\nSTATIC_FOLDER = 'static'\n\ndef create_database():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    c.execute('''CREATE TABLE IF NOT EXISTS image_directories\n                 (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, jpg_count INT)''')\n    conn.commit()\n    conn.close()\n\ndef scan_directories():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    for root, dirs, files in os.walk(STATIC_FOLDER):\n        jpg_count = len([file for file in files if file.endswith('.jpg')])\n        if jpg_count > 40:\n            print(root, jpg_count)\n            directory = os.path.relpath(root, STATIC_FOLDER)\n            c.execute(\"INSERT INTO image_directories (directory, jpg_count) VALUES (?, ?)\", (directory, jpg_count))\n    conn.commit()\n    conn.close()\n\n@app.route('/update_database')\ndef update_database():\n    create_database()\n    scan_directories()\n    return 'Database Updated'\n\nif __name__ == '__main__':\n    app.run(debug=True)\n```\n\nMake sure to replace the existing code with this updated version."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "59035b18-3b22-4514-a7d7-3d84c9fd93f2",
+        "children": [
+          "aaa2ac34-e626-47e6-a1d3-31772fb8602a"
+        ]
+      },
+      "aaa2ac34-e626-47e6-a1d3-31772fb8602a": {
+        "id": "aaa2ac34-e626-47e6-a1d3-31772fb8602a",
+        "message": {
+          "id": "aaa2ac34-e626-47e6-a1d3-31772fb8602a",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001080.29301,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "2] No such file or directory: 'static/milestones_resources/examin/temp/00001.jpg'           temp is in the root"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "06d2ad30-25be-4813-9392-10e60c55fec3",
+        "children": [
+          "a30f769b-0c9b-4bf0-b2e4-623f1cc45f1c"
+        ]
+      },
+      "a30f769b-0c9b-4bf0-b2e4-623f1cc45f1c": {
+        "id": "a30f769b-0c9b-4bf0-b2e4-623f1cc45f1c",
+        "message": {
+          "id": "a30f769b-0c9b-4bf0-b2e4-623f1cc45f1c",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001096.137902,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "I apologize for the confusion. If you want the `temp` directory to be in the root directory, you can update the code as follows:\n\n```python\nimport subprocess\nimport shutil\nimport os\nimport sqlite3\nimport random\nfrom flask import Flask\nimport logging\nfrom logging.handlers import RotatingFileHandler\nimport shutil\nfrom flask import Flask, render_template, url_for, request, redirect, flash, send_file, render_template_string\n\napp = Flask(__name__)\n# Create a logger object\nlogger = logging.getLogger(__name__)\nlogger.setLevel(logging.DEBUG)\n\n# Create a formatter for the log messages\nformatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')\n\n# Create a file handler to write log messages to a file\nfile_handler = RotatingFileHandler('Logs/QuickVid.log', maxBytes=10000, backupCount=1)\nfile_handler.setLevel(logging.DEBUG)\nfile_handler.setFormatter(formatter)\n\n# Add the file handler to the logger\nlogger.addHandler(file_handler)\n\n# Set up logging for the Flask app\napp.logger.addHandler(file_handler)\n# Create a logger object\n\n\n@app.route('/')\ndef home():\n    data = render_template_string(\"<a href='{{ url_for('indexB') }}'>Create a Video</a><br />\")\n    return data\n\n@app.route('/indexB')\ndef indexB():\n    # Get the current date and time\n    current_datetime = subprocess.check_output([\"date\", \"+%Y-%m-%d_%H-%M-%S\"]).decode().strip()\n    \n    # Create a filename with the current date and time\n    filename = f\"EXPERIMENT/_file_{current_datetime}.mp4\"\n    \n    # Set the paths and filenames\n    #DIR = \"static/milestones_resources/alien_files/\"\n    DIR = \"static/milestones_resources/examin/\"\n    directory_name = os.path.basename(DIR.rstrip('/'))\n    MUSIC =\"OLD_resources/Devil_s_Organ-Jimena_Contreras.mp3\"\n    # Update VIDEO and FINAL filenames\n    VIDEO = f\"EXP/{directory_name}.mp4\"\n    FINAL = f\"EXP/file_{current_datetime}store.mp4\"\n    TExt = \"TEXT TEST 12345\"\n    logger.debug('This is a debug message: %s', TExt)\n    logger.debug('This is FINAL: %s', FINAL)\n    # Get all filenames in the directory\n    filenames = os.listdir(DIR)\n    logger.debug('This is filenames: %s', filenames)\n    \n    # Sort the filenames in alphabetical order\n    filenames.sort()\n    \n    # Shuffle the filenames randomly\n    random.shuffle(filenames)\n    logger.debug('This is shuffled filenames: %s', filenames)\n \n    # Generate a temporary directory to store renamed files\n    temp_dir = \"temp\"\n    \n    # Create the temporary directory in the root directory\n    temp_dir_path = os.path.join(os.getcwd(), temp_dir)\n    os.makedirs(temp_dir_path, exist_ok=True)\n    \n    # Rename files with leading zeros\n    for i, filename in enumerate(filenames, start=1):\n        print(f\"FILENAME:,{DIR}{filename}\")\n        new_filename = os.path.join(temp_dir_path, f\"{i:05d}.jpg\")\n        logger.debug('This is filename: %s', filename)\n        shutil.copy(os.path.join(DIR, filename), new_filename)\n\n    # Execute the FFmpeg command to create VIDEO\n    subprocess.call([\n        \"ffmpeg\", \"-hide_banner\", \"-framerate\", \"5\", \"-i\", f\"{temp_dir_path}/%05d.jpg\", \"-c:v\", \"libx264\",\n        \"-r\", \"30\", \"-pix_fmt\", \"y"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": false,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "max_tokens"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2ac34-e626-47e6-a1d3-31772fb8602a",
+        "children": [
+          "4f13a658-1a2b-423b-b968-68296286f414"
+        ]
+      },
+      "4f13a658-1a2b-423b-b968-68296286f414": {
+        "id": "4f13a658-1a2b-423b-b968-68296286f414",
+        "message": {
+          "id": "4f13a658-1a2b-423b-b968-68296286f414",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001164.784635,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "uv420p\", \"-y\", VIDEO\n    ])\n    \n    # Remove the temporary directory and files\n    shutil.rmtree(temp_dir_path)\n    \n    # Generate the image with text\n    TITLEimage = os.path.join(DIR, directory_name)\n    subprocess.call([\n        \"ffmpeg\", \"-i\", TITLEimage,\n        \"-vf\", f\"drawtext=text='{directory_name}':fontfile=/home/jack/fonts/freesansbold.ttf:fontsize=45:fontcolor=white:x=(w-text_w)/2:y=((h-text_h)/2)-300\",\n        \"-y\", \"static/result_image_with_text.jpg\"\n    ])\n\n    # Concatenate the image with text and the video\n    subprocess.call([\n        \"ffmpeg\", \"-loop\", \"1\", \"-i\", \"static/text/result_image_with_text.jpg\",\n        \"-vf\", \"fade=t=in:st=0:d=1:alpha=1, fade=t=out:st=3:d=1:alpha=1\",\n        \"-c:v\", \"libx264\", \"-t\", \"4\", \"-y\", \"static/text/result_image_with_text.mp4\"\n    ])\n    \n    subprocess.call([\n        \"ffmpeg\", \"-i\", \"static/text/result_image_with_text.mp4\", \"-i\", filename,\n        \"-filter_complex\", \"[0:v] [1:v] concat=n=2:v=1:a=0 [v]\",\n        \"-map\", \"[v]\", \"-t\", \"59\", \"-y\", \"EXP/titled.mp4\"\n    ])\n    \n    random_number = subprocess.check_output([\"shuf\", \"-i\", \"100-3099\", \"-n\", \"1\"]).decode().strip()\n    subprocess.call([\n        \"ffmpeg\", \"-ss\", \"0\", \"-i\", \"EXP/titled.mp4\",\n        \"-ss\", random_number, \"-i\", MUSIC,\n        \"-map\", \"0:v\", \"-map\", \"1:a\",\n        \"-c:v\", \"copy\", \"-c:a\", \"aac\", \"-shortest\", \"-t\", \"58\", \"-y\", FINAL\n    ])\n    \n    vid = \"static/videos/temp.mp4\"\n\n    return render_template('indexB.html', final_video=FINAL)\n\n\nDATABASE = 'image_database.db'\nSTATIC_FOLDER = 'static'\n\ndef create_database():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    c.execute('''CREATE TABLE IF NOT EXISTS image_directories\n                 (id INTEGER PRIMARY KEY AUTOINCREMENT, directory TEXT, jpg_count INT)''')\n    conn.commit()\n    conn.close()\n\ndef scan_directories():\n    conn = sqlite3.connect(DATABASE)\n    c = conn.cursor()\n    for root, dirs, files in os.walk(STATIC_FOLDER):\n        jpg_count = len([file for file in files if file.endswith('.jpg')])\n        if jpg_count > 40:\n            print(root, jpg_count)\n            directory = os.path.relpath(root, STATIC_FOLDER)\n            c.execute(\"INSERT INTO image_directories (directory, jpg_count) VALUES (?, ?)\", (directory, jpg_count))\n    conn.commit()\n    conn.close()\n\n@app.route('/update_database')\ndef update_database():\n    create_database()\n    scan_directories()\n    return 'Database Updated'\n\nif __name__ == '__main__':\n    app.run(debug=True)\n```\n\nThis updated code will create the `temp` directory in the root directory."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "a30f769b-0c9b-4bf0-b2e4-623f1cc45f1c",
+        "children": [
+          "aaa2dac6-f374-4511-809b-ddfcab580725"
+        ]
+      },
+      "aaa2dac6-f374-4511-809b-ddfcab580725": {
+        "id": "aaa2dac6-f374-4511-809b-ddfcab580725",
+        "message": {
+          "id": "aaa2dac6-f374-4511-809b-ddfcab580725",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001624.126983,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Linux stopped showing image icons"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all"
+        },
+        "parent": "4f13a658-1a2b-423b-b968-68296286f414",
+        "children": [
+          "0b231844-18f1-4579-8e62-10279b17ca60",
+          "429186af-9845-4539-aed4-df07d7c4260d"
+        ]
+      },
+      "0b231844-18f1-4579-8e62-10279b17ca60": {
+        "id": "0b231844-18f1-4579-8e62-10279b17ca60",
+        "message": {
+          "id": "0b231844-18f1-4579-8e62-10279b17ca60",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001640.561154,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              ""
+            ]
+          },
+          "status": "in_progress",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "interrupted"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2dac6-f374-4511-809b-ddfcab580725",
+        "children": []
+      },
+      "429186af-9845-4539-aed4-df07d7c4260d": {
+        "id": "429186af-9845-4539-aed4-df07d7c4260d",
+        "message": {
+          "id": "429186af-9845-4539-aed4-df07d7c4260d",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1687001665.96962,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "If Linux has stopped showing image icons, it could be due to various reasons. Here are a few possible solutions to try:\n\n1. Clear the thumbnail cache: Thumbnails are small images generated by the file manager to represent image files. Sometimes, issues with the thumbnail cache can cause image icons to stop displaying. You can try clearing the thumbnail cache to see if it resolves the issue. Open a terminal and run the following command:\n   \n   ```bash\n   rm -r ~/.cache/thumbnails/*\n   ```\n\n   This command will remove all the thumbnail cache files. After executing the command, restart your file manager or log out and log back in to refresh the icons.\n\n2. Check the file associations: Ensure that the file associations for image files are correctly set. Right-click on an image file, select \"Properties\" or \"Open with,\" and make sure the default application for opening image files is set correctly (e.g., an image viewer like Eye of GNOME, GIMP, etc.). If the association is incorrect, you can change it to the desired image viewer.\n\n3. Reset icon theme: If the issue is specific to the icon theme you are using, resetting it to the default theme or selecting a different icon theme may help. Open the system settings or appearance settings, navigate to the \"Icons\" or \"Themes\" section, and choose a different icon theme or reset it to the default theme.\n\n4. Verify image viewer installation: Ensure that the image viewer application is properly installed on your system. You can try reinstalling the image viewer or installing an alternative image viewer to see if it resolves the issue.\n\n5. Check disk space: Insufficient disk space can sometimes cause issues with icon rendering. Make sure you have enough free space on your system's storage device. If the disk space is running low, consider freeing up space by deleting unnecessary files.\n\n6. Restart the file manager: Sometimes, restarting the file manager can resolve issues with icons not displaying. You can restart the file manager by logging out and logging back in or by restarting the system.\n\nIf none of these solutions work, please provide more details about your Linux distribution, desktop environment, and any recent changes or updates you made to your system."
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "text-davinci-002-render-sha",
+            "finish_details": {
+              "type": "stop",
+              "stop": "<|diff_marker|>"
+            },
+            "timestamp_": "absolute"
+          },
+          "recipient": "all"
+        },
+        "parent": "aaa2dac6-f374-4511-809b-ddfcab580725",
+        "children": []
+      }
+    },
+    "moderation_results": [],
+    "current_node": "429186af-9845-4539-aed4-df07d7c4260d",
+    "plugin_ids": null,
+    "conversation_id": "1e393677-04c9-44a3-a06e-aa6fba87949a",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "is_archived": false,
+    "safe_urls": [],
+    "id": "1e393677-04c9-44a3-a06e-aa6fba87949a"
+  }
+]

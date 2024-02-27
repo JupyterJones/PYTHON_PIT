@@ -1,0 +1,576 @@
+Generate Loopable Stylized Images<br />
+user<br />
+User<br />
+from PIL import Image<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+import time<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+np_config.enable_numpy_behavior()<br />
+from PIL import Image<br />
+import random<br />
+import os<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512,768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_"+CFilename)<br />
+    Content_data="preped_images/Content_"+CFilename<br />
+    return Content_data<br />
+    <br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512,768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_"+SFilename)<br />
+    Style_data="preped_images/Style_"+SFilename<br />
+    return Style_data    <br />
+<br />
+<br />
+path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+base_image = random.choice([<br />
+    x for x in os.listdir(path)<br />
+    if os.path.isfile(os.path.join(path, x))<br />
+])<br />
+content=(path+base_image)<br />
+print("content"+path+base_image)<br />
+<br />
+#content = "/home/jack/Pictures/1022362.jpg"<br />
+#content = "/home/jack/Desktop/TENSORFLOW/images/default-file-q4.png"<br />
+<br />
+path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+base_image = random.choice([<br />
+    x for x in os.listdir(path)<br />
+    if os.path.isfile(os.path.join(path, x))<br />
+])<br />
+style=(path+base_image)<br />
+print("style"+path+base_image)<br />
+content_image = load_img(prep_content(content))<br />
+style_image = load_img(prep_style(style))<br />
+print(content_image.size)<br />
+print(style_image.size)<br />
+<br />
+hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+stylized_image = hub_model(tf.constant(content_image), tf.constant(style_image))[0]<br />
+im = tensor_to_image(stylized_image)<br />
+timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+savefile = "images/"+timestr+".jpg"<br />
+im.save(savefile)<br />
+        <br />
+This script works fine:<br />
+HELP:<br />
+I want it turned into a function so I can run it in a loop to generate several images <br />
+<br />
+ChatGPT<br />
+Jack, I've transformed your script into a function called `generate_stylized_image` that you can run in a loop to generate multiple images. I've also added logging statements to help you understand the flow and identify any issues. Here's the complete script:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+import time<br />
+from PIL import Image<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+<br />
+np_config.enable_numpy_behavior()<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_" + CFilename)<br />
+    Content_data = "preped_images/Content_" + CFilename<br />
+    return Content_data<br />
+<br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_" + SFilename)<br />
+    Style_data = "preped_images/Style_" + SFilename<br />
+    return Style_data<br />
+<br />
+def load_img(image_path):<br />
+    return Image.open(image_path)<br />
+<br />
+def tensor_to_image(tensor):<br />
+    tensor = tensor*255<br />
+    tensor = tf.cast(tensor, tf.uint8)<br />
+    return Image.fromarray(tensor.numpy())<br />
+<br />
+def generate_stylized_image(content_path, style_path):<br />
+    # Prepare content and style images<br />
+    content_image = load_img(prep_content(content_path))<br />
+    style_image = load_img(prep_style(style_path))<br />
+    <br />
+    print("Content image size:", content_image.size)<br />
+    print("Style image size:", style_image.size)<br />
+<br />
+    # Load the model<br />
+    hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+<br />
+    # Generate stylized image<br />
+    stylized_image = hub_model(tf.constant(content_image), tf.constant(style_image))[0]<br />
+<br />
+    # Convert and save the stylized image<br />
+    im = tensor_to_image(stylized_image)<br />
+    timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+    savefile = "images/" + timestr + ".jpg"<br />
+    im.save(savefile)<br />
+    <br />
+    print("Stylized image saved at:", savefile)<br />
+<br />
+# Example usage in a loop<br />
+for _ in range(5):  # You can adjust the number of images to generate<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+    content_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+    style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    generate_stylized_image(content_image, style_image)<br />
+```<br />
+<br />
+Feel free to run this in a loop, and let me know if you have any questions or if you'd like any further modifications.<br />
+user<br />
+--------------------------------------------------------------------------<br />
+InvalidArgumentError                      Traceback (most recent call last)<br />
+Cell In[28], line 65<br />
+     62 path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+     63 style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+---&gt; 65 generate_stylized_image(content_image, style_image)<br />
+<br />
+Cell In[28], line 47, in generate_stylized_image(content_path, style_path)<br />
+     44 hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+     46 # Generate stylized image<br />
+---&gt; 47 stylized_image = hub_model(tf.constant(content_image), tf.constant(style_image))[0]<br />
+     49 # Convert and save the stylized image<br />
+     50 im = tensor_to_image(stylized_image)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/saved_model/load.py:722, in _call_attribute(instance, *args, **kwargs)<br />
+    721 def _call_attribute(instance, *args, **kwargs):<br />
+--&gt; 722   return instance.__call__(*args, **kwargs)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/polymorphic_function/monomorphic_function.py:1474, in ConcreteFunction.__call__(self, *args, **kwargs)<br />
+   1424 def __call__(self, *args, **kwargs):<br />
+   1425   """Executes the wrapped function.<br />
+   1426 <br />
+   1427   ConcreteFunctions have two signatures:<br />
+   (...)<br />
+   1472     TypeError: If the arguments do not match the function's signature.<br />
+   1473   """<br />
+-&gt; 1474   return self._call_impl(args, kwargs)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/polymorphic_function/monomorphic_function.py:1492, in ConcreteFunction._call_impl(self, args, kwargs, cancellation_manager)<br />
+   1489     except TypeError:<br />
+   1490       raise structured_err<br />
+-&gt; 1492 return self._call_with_flat_signature(args, kwargs, cancellation_manager)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/polymorphic_function/monomorphic_function.py:1541, in ConcreteFunction._call_with_flat_signature(self, args, kwargs, cancellation_manager)<br />
+   1536   if not isinstance(<br />
+   1537       arg, (ops.Tensor, resource_variable_ops.BaseResourceVariable)):<br />
+   1538     raise TypeError(f"{self._flat_signature_summary()}: expected argument "<br />
+   1539                     f"#{i}(zero-based) to be a Tensor; "<br />
+   1540                     f"got {type(arg).__name__} ({arg}).")<br />
+-&gt; 1541 return self._call_flat(args, self.captured_inputs, cancellation_manager)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/saved_model/load.py:138, in _WrapperFunction._call_flat(self, args, captured_inputs, cancellation_manager)<br />
+    136 else:  # cross-replica context<br />
+    137   captured_inputs = list(map(get_unused_handle, captured_inputs))<br />
+--&gt; 138 return super(_WrapperFunction, self)._call_flat(args, captured_inputs,<br />
+    139                                                 cancellation_manager)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/polymorphic_function/monomorphic_function.py:1745, in ConcreteFunction._call_flat(self, args, captured_inputs, cancellation_manager)<br />
+   1741 possible_gradient_type = gradients_util.PossibleTapeGradientTypes(args)<br />
+   1742 if (possible_gradient_type == gradients_util.POSSIBLE_GRADIENT_TYPES_NONE<br />
+   1743     and executing_eagerly):<br />
+   1744   # No tape is watching; skip to running the function.<br />
+-&gt; 1745   return self._build_call_outputs(self._inference_function.call(<br />
+   1746       ctx, args, cancellation_manager=cancellation_manager))<br />
+   1747 forward_backward = self._select_forward_and_backward_functions(<br />
+   1748     args,<br />
+   1749     possible_gradient_type,<br />
+   1750     executing_eagerly)<br />
+   1751 forward_function, args_with_tangents = forward_backward.forward()<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/polymorphic_function/monomorphic_function.py:378, in _EagerDefinedFunction.call(self, ctx, args, cancellation_manager)<br />
+    376 with _InterpolateFunctionError(self):<br />
+    377   if cancellation_manager is None:<br />
+--&gt; 378     outputs = execute.execute(<br />
+    379         str(self.signature.name),<br />
+    380         num_outputs=self._num_outputs,<br />
+    381         inputs=args,<br />
+    382         attrs=attrs,<br />
+    383         ctx=ctx)<br />
+    384   else:<br />
+    385     outputs = execute.execute_with_cancellation(<br />
+    386         str(self.signature.name),<br />
+    387         num_outputs=self._num_outputs,<br />
+   (...)<br />
+    390         ctx=ctx,<br />
+    391         cancellation_manager=cancellation_manager)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/eager/execute.py:52, in quick_execute(op_name, num_outputs, inputs, attrs, ctx, name)<br />
+     50 try:<br />
+     51   ctx.ensure_initialized()<br />
+---&gt; 52   tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,<br />
+     53                                       inputs, attrs, num_outputs)<br />
+     54 except core._NotOkStatusException as e:<br />
+     55   if name is not None:<br />
+<br />
+InvalidArgumentError: cannot compute __inference_pruned_30218 as input #0(zero-based) was expected to be a float tensor but is a uint8 tensor [Op:__inference_pruned_30218]<br />
+ChatGPT<br />
+It seems like there's an issue with the data types of the input images when passing them to the TensorFlow model. The error indicates that the model expects float tensor inputs, but the provided images are uint8 tensors.<br />
+<br />
+Let's modify the `generate_stylized_image` function to convert the images to float tensors before passing them to the model. I'll also add some logging statements to help you understand the flow. Here's the updated code:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+import time<br />
+from PIL import Image<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+<br />
+np_config.enable_numpy_behavior()<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_" + CFilename)<br />
+    Content_data = "preped_images/Content_" + CFilename<br />
+    return Content_data<br />
+<br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_" + SFilename)<br />
+    Style_data = "preped_images/Style_" + SFilename<br />
+    return Style_data<br />
+<br />
+def load_img(image_path):<br />
+    return Image.open(image_path)<br />
+<br />
+def tensor_to_image(tensor):<br />
+    tensor = tensor * 255<br />
+    tensor = tf.cast(tensor, tf.uint8)<br />
+    return Image.fromarray(tensor.numpy())<br />
+<br />
+def generate_stylized_image(content_path, style_path):<br />
+    # Prepare content and style images<br />
+    content_image = load_img(prep_content(content_path))<br />
+    style_image = load_img(prep_style(style_path))<br />
+<br />
+    print("Content image size:", content_image.size)<br />
+    print("Style image size:", style_image.size)<br />
+<br />
+    # Convert images to float tensors<br />
+    content_image = tf.image.convert_image_dtype(content_image, dtype=tf.float32)<br />
+    style_image = tf.image.convert_image_dtype(style_image, dtype=tf.float32)<br />
+<br />
+    # Load the model<br />
+    hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+<br />
+    # Generate stylized image<br />
+    stylized_image = hub_model(tf.constant([content_image]), tf.constant([style_image]))[0]<br />
+<br />
+    # Convert and save the stylized image<br />
+    im = tensor_to_image(stylized_image)<br />
+    timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+    savefile = "images/" + timestr + ".jpg"<br />
+    im.save(savefile)<br />
+<br />
+    print("Stylized image saved at:", savefile)<br />
+<br />
+# Example usage in a loop<br />
+for _ in range(5):  # You can adjust the number of images to generate<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+    content_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+    style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    generate_stylized_image(content_image, style_image)<br />
+```<br />
+<br />
+Try running this updated code, and let me know if it resolves the issue.<br />
+user<br />
+--------------------------------------------------------------------------<br />
+ValueError                                Traceback (most recent call last)<br />
+Cell In[29], line 69<br />
+     66 path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+     67 style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+---&gt; 69 generate_stylized_image(content_image, style_image)<br />
+<br />
+Cell In[29], line 51, in generate_stylized_image(content_path, style_path)<br />
+     48 hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+     50 # Generate stylized image<br />
+---&gt; 51 stylized_image = hub_model(tf.constant([content_image]), tf.constant([style_image]))[0]<br />
+     53 # Convert and save the stylized image<br />
+     54 im = tensor_to_image(stylized_image)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/framework/constant_op.py:267, in constant(value, dtype, shape, name)<br />
+    170 @tf_export("constant", v1=[])<br />
+    171 def constant(value, dtype=None, shape=None, name="Const"):<br />
+    172   """Creates a constant tensor from a tensor-like object.<br />
+    173 <br />
+    174   Note: All eager `tf.Tensor` values are immutable (in contrast to<br />
+   (...)<br />
+    265     ValueError: if called on a symbolic tensor.<br />
+    266   """<br />
+--&gt; 267   return _constant_impl(value, dtype, shape, name, verify_shape=False,<br />
+    268                         allow_broadcast=True)<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/framework/constant_op.py:279, in _constant_impl(value, dtype, shape, name, verify_shape, allow_broadcast)<br />
+    277     with trace.Trace("tf.constant"):<br />
+    278       return _constant_eager_impl(ctx, value, dtype, shape, verify_shape)<br />
+--&gt; 279   return _constant_eager_impl(ctx, value, dtype, shape, verify_shape)<br />
+    281 g = ops.get_default_graph()<br />
+    282 tensor_value = attr_value_pb2.AttrValue()<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/framework/constant_op.py:304, in _constant_eager_impl(ctx, value, dtype, shape, verify_shape)<br />
+    302 def _constant_eager_impl(ctx, value, dtype, shape, verify_shape):<br />
+    303   """Creates a constant on the current device."""<br />
+--&gt; 304   t = convert_to_eager_tensor(value, ctx, dtype)<br />
+    305   if shape is None:<br />
+    306     return t<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/framework/constant_op.py:102, in convert_to_eager_tensor(value, ctx, dtype)<br />
+    100     dtype = dtypes.as_dtype(dtype).as_datatype_enum<br />
+    101 ctx.ensure_initialized()<br />
+--&gt; 102 return ops.EagerTensor(value, ctx.device_name, dtype)<br />
+<br />
+ValueError: TypeError: Scalar tensor has no `len()`<br />
+Traceback (most recent call last):<br />
+<br />
+  File "/home/jack/miniconda3/envs/cloned_base/lib/python3.9/site-packages/tensorflow/python/framework/ops.py", line 1102, in __len__<br />
+    raise TypeError("Scalar tensor has no `len()`")<br />
+<br />
+TypeError: Scalar tensor has no `len()`<br />
+<br />
+<br />
+ChatGPT<br />
+It looks like there's an issue with how the input tensors are created. TensorFlow's `hub_model` expects tensors, but the current implementation might be causing an error.<br />
+<br />
+Let's modify the function to create the tensors correctly. Instead of using `tf.constant([content_image])`, we should convert the PIL images to NumPy arrays and then use `tf.convert_to_tensor`. Here's the updated code:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+import time<br />
+from PIL import Image<br />
+import numpy as np<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+<br />
+np_config.enable_numpy_behavior()<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_" + CFilename)<br />
+    Content_data = "preped_images/Content_" + CFilename<br />
+    return Content_data<br />
+<br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_" + SFilename)<br />
+    Style_data = "preped_images/Style_" + SFilename<br />
+    return Style_data<br />
+<br />
+def load_img(image_path):<br />
+    return Image.open(image_path)<br />
+<br />
+def tensor_to_image(tensor):<br />
+    tensor = tensor * 255<br />
+    tensor = tf.cast(tensor, tf.uint8)<br />
+    return Image.fromarray(tensor.numpy())<br />
+<br />
+def generate_stylized_image(content_path, style_path):<br />
+    # Prepare content and style images<br />
+    content_image = load_img(prep_content(content_path))<br />
+    style_image = load_img(prep_style(style_path))<br />
+<br />
+    print("Content image size:", content_image.size)<br />
+    print("Style image size:", style_image.size)<br />
+<br />
+    # Convert images to float tensors<br />
+    content_image = tf.image.convert_image_dtype(content_image, dtype=tf.float32)<br />
+    style_image = tf.image.convert_image_dtype(style_image, dtype=tf.float32)<br />
+<br />
+    # Convert PIL images to NumPy arrays<br />
+    content_image_np = np.array(content_image)<br />
+    style_image_np = np.array(style_image)<br />
+<br />
+    # Convert NumPy arrays to tensors<br />
+    content_tensor = tf.convert_to_tensor([content_image_np], dtype=tf.float32)<br />
+    style_tensor = tf.convert_to_tensor([style_image_np], dtype=tf.float32)<br />
+<br />
+    # Load the model<br />
+    hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+<br />
+    # Generate stylized image<br />
+    stylized_image = hub_model(content_tensor, style_tensor)[0]<br />
+<br />
+    # Convert and save the stylized image<br />
+    im = tensor_to_image(stylized_image)<br />
+    timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+    savefile = "images/" + timestr + ".jpg"<br />
+    im.save(savefile)<br />
+<br />
+    print("Stylized image saved at:", savefile)<br />
+<br />
+# Example usage in a loop<br />
+for _ in range(5):  # You can adjust the number of images to generate<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+    content_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+    style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    generate_stylized_image(content_image, style_image)<br />
+```<br />
+<br />
+This should resolve the `ValueError` you encountered. Give it a try and let me know if it works for you.<br />
+user<br />
+--------------------------------------------------------------------------<br />
+KeyError                                  Traceback (most recent call last)<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/PIL/Image.py:2813, in fromarray(obj, mode)<br />
+   2812 try:<br />
+-&gt; 2813     mode, rawmode = _fromarray_typemap[typekey]<br />
+   2814 except KeyError as e:<br />
+<br />
+KeyError: ((1, 1, 512, 3), '|u1')<br />
+<br />
+The above exception was the direct cause of the following exception:<br />
+<br />
+TypeError                                 Traceback (most recent call last)<br />
+Cell In[30], line 78<br />
+     75 path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+     76 style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+---&gt; 78 generate_stylized_image(content_image, style_image)<br />
+<br />
+Cell In[30], line 63, in generate_stylized_image(content_path, style_path)<br />
+     60 stylized_image = hub_model(content_tensor, style_tensor)[0]<br />
+     62 # Convert and save the stylized image<br />
+---&gt; 63 im = tensor_to_image(stylized_image)<br />
+     64 timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+     65 savefile = "images/" + timestr + ".jpg"<br />
+<br />
+Cell In[30], line 34, in tensor_to_image(tensor)<br />
+     32 tensor = tensor * 255<br />
+     33 tensor = tf.cast(tensor, tf.uint8)<br />
+---&gt; 34 return Image.fromarray(tensor.numpy())<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/PIL/Image.py:2815, in fromarray(obj, mode)<br />
+   2813         mode, rawmode = _fromarray_typemap[typekey]<br />
+   2814     except KeyError as e:<br />
+-&gt; 2815         raise TypeError("Cannot handle this data type: %s, %s" % typekey) from e<br />
+   2816 else:<br />
+   2817     rawmode = mode<br />
+<br />
+TypeError: Cannot handle this data type: (1, 1, 512, 3), |u1<br />
+<br />
+ChatGPT<br />
+It seems there's an issue with the data type of the stylized image when trying to convert it back to a PIL Image. The error indicates that the data type is not supported by the `Image.fromarray` function.<br />
+<br />
+Let's modify the `tensor_to_image` function to handle the data type correctly. We will first convert the TensorFlow tensor to a NumPy array and then create a PIL Image. Here's the updated code:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+import time<br />
+from PIL import Image<br />
+import numpy as np<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+<br />
+np_config.enable_numpy_behavior()<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_" + CFilename)<br />
+    Content_data = "preped_images/Content_" + CFilename<br />
+    return Content_data<br />
+<br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512, 768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_" + SFilename)<br />
+    Style_data = "preped_images/Style_" + SFilename<br />
+    return Style_data<br />
+<br />
+def load_img(image_path):<br />
+    return Image.open(image_path)<br />
+<br />
+def tensor_to_image(tensor):<br />
+    # Ensure the tensor is in the correct data range<br />
+    tensor = tf.clip_by_value(tensor, 0.0, 255.0)<br />
+    <br />
+    # Convert the tensor to a NumPy array<br />
+    tensor = tf.cast(tensor, tf.uint8)<br />
+    tensor = np.array(tensor)<br />
+    <br />
+    # Convert the NumPy array to a PIL Image<br />
+    return Image.fromarray(tensor)<br />
+<br />
+def generate_stylized_image(content_path, style_path):<br />
+    # Prepare content and style images<br />
+    content_image = load_img(prep_content(content_path))<br />
+    style_image = load_img(prep_style(style_path))<br />
+<br />
+    print("Content image size:", content_image.size)<br />
+    print("Style image size:", style_image.size)<br />
+<br />
+    # Convert images to float tensors<br />
+    content_image = tf.image.convert_image_dtype(content_image, dtype=tf.float32)<br />
+    style_image = tf.image.convert_image_dtype(style_image, dtype=tf.float32)<br />
+<br />
+    # Convert PIL images to NumPy arrays<br />
+    content_image_np = np.array(content_image)<br />
+    style_image_np = np.array(style_image)<br />
+<br />
+    # Convert NumPy arrays to tensors<br />
+    content_tensor = tf.convert_to_tensor([content_image_np], dtype=tf.float32)<br />
+    style_tensor = tf.convert_to_tensor([style_image_np], dtype=tf.float32)<br />
+<br />
+    # Load the model<br />
+    hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+<br />
+    # Generate stylized image<br />
+    stylized_image = hub_model(content_tensor, style_tensor)[0]<br />
+<br />
+    # Convert and save the stylized image<br />
+    im = tensor_to_image(stylized_image)<br />
+    timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+    savefile = "images/" + timestr + ".jpg"<br />
+    im.save(savefile)<br />
+<br />
+    print("Stylized image saved at:", savefile)<br />
+<br />
+# Example usage in a loop<br />
+for _ in range(5):  # You can adjust the number of images to generate<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+    content_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+    style_image = os.path.join(path, random.choice([x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]))<br />
+<br />
+    generate_stylized_image(content_image, style_image)<br />
+```<br />
+<br />
+This should resolve the `TypeError` you encountered. Give it a try and let me know if it works for you.<br />
+<br />

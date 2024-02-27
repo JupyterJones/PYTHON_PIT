@@ -1,0 +1,315 @@
+Crear video con transiciones.<br />
+user<br />
+# Good working with fade transition<br />
+import os<br />
+import random<br />
+from moviepy.editor import *<br />
+from moviepy.video.fx import *<br />
+import glob<br />
+from PIL import Image<br />
+import uuid<br />
+from moviepy.editor import *<br />
+from moviepy.audio.fx.all import audio_fadein<br />
+from MUSIC import music<br />
+fps = 25 # Frames per second<br />
+<br />
+def choose_dir():<br />
+    path = "/home/jack/Desktop/HDD500/collections/images/"<br />
+    directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]<br />
+    <br />
+    if directories:<br />
+        DIR = os.path.join(path, random.choice(directories))<br />
+    else:<br />
+        return choose_dir()  # Return try again if there are no directories<br />
+<br />
+<br />
+    print("Selected directory:", DIR)<br />
+    try:<br />
+        # Get a list of the image filenames in the directory<br />
+        image_files = random.sample(glob.glob(DIR+'/*.jpg'), 26)<br />
+        print("Number of image files:", len(image_files))<br />
+        size = Image.open(image_files[0]).size<br />
+        print("Size of the first image:", size)<br />
+        random.shuffle(image_files)<br />
+    except:<br />
+        # if fail run again<br />
+        choose_dir()<br />
+        <br />
+        return image_files<br />
+# Define the transitions<br />
+def crossfade(clip1, clip2):<br />
+    return CompositeVideoClip([clip1.fx(vfx.fadeout, duration=1), <br />
+                               clip2.fx(vfx.fadein, duration=1)], <br />
+                              size=size)<br />
+def create_video(image_files=choose_dir()):<br />
+    # Create a list of image clips with transitions<br />
+    clips = []<br />
+    image_files=choose_dir()<br />
+    for i in range(len(image_files)):<br />
+        # Load the image and create a video clip<br />
+        image_clip = ImageClip(image_files[i]).set_duration(duration)<br />
+        <br />
+        if i &gt; 0:<br />
+            # Add a crossfade transition to the previous clip<br />
+            transition = crossfade(clips[-1], image_clip)<br />
+            clips.append(transition)<br />
+            <br />
+        clips.append(image_clip)<br />
+<br />
+    # Concatenate the clips to create the final video<br />
+    video = concatenate_videoclips(clips)<br />
+<br />
+    # Set the output video parameters<br />
+    video = video.set_fps(fps)<br />
+    video = video.resize(size)<br />
+<br />
+    # Save the video<br />
+    video.write_videofile('slideshowT.mp4')<br />
+<br />
+    #DIR ="/home/jack/Desktop/HDD500/collections/images/Gorgeous/"<br />
+    # Load video and audio clips<br />
+    video_clip = VideoFileClip("slideshowT.mp4")<br />
+    audio_clip = AudioFileClip(music())<br />
+<br />
+    # Ensure the audio clip is the same duration as the video<br />
+    if audio_clip.duration &gt; video_clip.duration:<br />
+        audio_clip = audio_clip.subclip(0, video_clip.duration)<br />
+    else:<br />
+        padding_duration = video_clip.duration - audio_clip.duration<br />
+        padding = AudioFileClip.silence(duration=padding_duration)<br />
+        audio_clip = concatenate_audioclips([audio_clip, padding])<br />
+<br />
+    # Define fade durations<br />
+    fade_in_duration = 10  # seconds<br />
+    fade_out_duration = 15  # seconds<br />
+<br />
+    # Apply fade in effect to audio<br />
+    faded_audio = audio_clip.audio_fadein(fade_in_duration)<br />
+<br />
+    # Apply fade out effect to audio at the end<br />
+    final_audio = faded_audio.audio_fadeout(fade_out_duration)<br />
+<br />
+    # Set audio of the video to the processed audio<br />
+    video_with_audio = video_clip.set_audio(final_audio)<br />
+<br />
+    # Write the final video with audio to a file<br />
+    output_path = selected_dir+"/slideshowSharp-music.mp4"<br />
+    video_with_audio.write_videofile(output_path, codec="libx264")<br />
+    # Source file path<br />
+    source_file = output_path<br />
+<br />
+    # Destination directory where you want to save a copy with a UUID-based name<br />
+    destination_dir = "/home/jack/Desktop/HDD500/collections/vids/"<br />
+    id_ = selected_dir.split("/")<br />
+    print(id_[-1])<br />
+    # Generate a UUID for the new file name<br />
+    new_filename = str(uuid.uuid4()) + "_"+id_[-1]+"slideshowSharp-music.mp4"<br />
+    print(new_filename)<br />
+    # Combine the destination directory and the new filename to create the full destination path<br />
+    destination_path = os.path.join(destination_dir, new_filename)<br />
+<br />
+    # Copy the file to the destination directory with the new name<br />
+    shutil.copy(source_file, destination_path)<br />
+    print(destination_path)<br />
+create_video()                   <br />
+ERROR:<br />
+Selected directory: /home/jack/Desktop/HDD500/collections/images/oct28<br />
+Selected directory: /home/jack/Desktop/HDD500/collections/images/assets<br />
+Selected directory: /home/jack/Desktop/HDD500/collections/images/Gorgeous<br />
+Number of image files: 26<br />
+Size of the first image: (512, 1024)<br />
+---------------------------------------------------------------------------<br />
+ValueError                                Traceback (most recent call last)<br />
+Cell In[34], line 27, in choose_dir()<br />
+     25 try:<br />
+     26     # Get a list of the image filenames in the directory<br />
+---&gt; 27     image_files = random.sample(glob.glob(DIR+'/*.jpg'), 26)<br />
+     28     print("Number of image files:", len(image_files))<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/random.py:449, in Random.sample(self, population, k, counts)<br />
+    448 if not 0 &lt;= k &lt;= n:<br />
+--&gt; 449     raise ValueError("Sample larger than population or is negative")<br />
+    450 result = [None] * k<br />
+<br />
+ValueError: Sample larger than population or is negative<br />
+<br />
+During handling of the above exception, another exception occurred:<br />
+<br />
+ValueError                                Traceback (most recent call last)<br />
+Cell In[34], line 27, in choose_dir()<br />
+     25 try:<br />
+     26     # Get a list of the image filenames in the directory<br />
+---&gt; 27     image_files = random.sample(glob.glob(DIR+'/*.jpg'), 26)<br />
+     28     print("Number of image files:", len(image_files))<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/random.py:449, in Random.sample(self, population, k, counts)<br />
+    448 if not 0 &lt;= k &lt;= n:<br />
+--&gt; 449     raise ValueError("Sample larger than population or is negative")<br />
+    450 result = [None] * k<br />
+<br />
+ValueError: Sample larger than population or is negative<br />
+<br />
+During handling of the above exception, another exception occurred:<br />
+<br />
+UnboundLocalError                         Traceback (most recent call last)<br />
+Cell In[34], line 42<br />
+     38 def crossfade(clip1, clip2):<br />
+     39     return CompositeVideoClip([clip1.fx(vfx.fadeout, duration=1), <br />
+     40                                clip2.fx(vfx.fadein, duration=1)], <br />
+     41                               size=size)<br />
+---&gt; 42 def create_video(image_files=choose_dir()):<br />
+     43     # Create a list of image clips with transitions<br />
+     44     clips = []<br />
+     45     image_files=choose_dir()<br />
+<br />
+Cell In[34], line 34, in choose_dir()<br />
+     31     random.shuffle(image_files)<br />
+     32 except:<br />
+     33     # if fail run again<br />
+---&gt; 34     choose_dir()<br />
+     36     return image_files<br />
+<br />
+Cell In[34], line 36, in choose_dir()<br />
+     32 except:<br />
+     33     # if fail run again<br />
+     34     choose_dir()<br />
+---&gt; 36     return image_files<br />
+<br />
+UnboundLocalError: local variable 'image_files' referenced before assignment<br />
+ChatGPT<br />
+It seems you're encountering an error in your script. The error you're seeing is due to the fact that when you call `choose_dir()` recursively in the `except` block, you're not returning the result back to the outer function. Let's correct the code and provide a complete script with detailed explanations and logging as you requested. Here's an updated version of your script:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+from moviepy.editor import *<br />
+from moviepy.video.fx import *<br />
+import glob<br />
+from PIL import Image<br />
+import uuid<br />
+from moviepy.editor import *<br />
+from moviepy.audio.fx.all import audio_fadein<br />
+import shutil<br />
+from MUSIC import music<br />
+<br />
+# Set the desired frame rate<br />
+fps = 25<br />
+<br />
+# Define the duration of each image in seconds<br />
+duration = 4<br />
+<br />
+# Get the selected directory<br />
+def choose_dir():<br />
+    path = "/home/jack/Desktop/HDD500/collections/images/"<br />
+    directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]<br />
+<br />
+    if not directories:<br />
+        print("No directories found in the specified path.")<br />
+        return None<br />
+<br />
+    DIR = os.path.join(path, random.choice(directories))<br />
+    print("Selected directory:", DIR)<br />
+<br />
+    try:<br />
+        # Get a list of the image filenames in the directory<br />
+        image_files = random.sample(glob.glob(os.path.join(DIR, '*.jpg'), 26)<br />
+        print("Number of image files:", len(image_files))<br />
+        size = Image.open(image_files[0]).size<br />
+        print("Size of the first image:", size)<br />
+        random.shuffle(image_files)<br />
+        return image_files<br />
+    except Exception as e:<br />
+        print(f"Error while selecting images: {str(e)}")<br />
+        return None<br />
+<br />
+# Define the transitions<br />
+def crossfade(clip1, clip2):<br />
+    return CompositeVideoClip([clip1.fx(vfx.fadeout, duration=1),<br />
+                               clip2.fx(vfx.fadein, duration=1)],<br />
+                              size=size)<br />
+<br />
+def create_video():<br />
+    # Get the list of image files<br />
+    image_files = choose_dir()<br />
+<br />
+    if image_files is None:<br />
+        print("Unable to select image files. Exiting.")<br />
+        return<br />
+<br />
+    # Create a list of image clips with transitions<br />
+    clips = []<br />
+    for i in range(len(image_files)):<br />
+        # Load the image and create a video clip<br />
+        image_clip = ImageClip(image_files[i]).set_duration(duration)<br />
+<br />
+        if i &gt; 0:<br />
+            # Add a crossfade transition to the previous clip<br />
+            transition = crossfade(clips[-1], image_clip)<br />
+            clips.append(transition)<br />
+<br />
+        clips.append(image_clip)<br />
+<br />
+    # Concatenate the clips to create the final video<br />
+    video = concatenate_videoclips(clips)<br />
+<br />
+    # Set the output video parameters<br />
+    video = video.set_fps(fps)<br />
+    video = video.resize(size)<br />
+<br />
+    # Save the video<br />
+    video.write_videofile('slideshowT.mp4')<br />
+<br />
+    # Load video and audio clips<br />
+    video_clip = VideoFileClip("slideshowT.mp4")<br />
+    audio_clip = AudioFileClip(music())<br />
+<br />
+    # Ensure the audio clip is the same duration as the video<br />
+    if audio_clip.duration &gt; video_clip.duration:<br />
+        audio_clip = audio_clip.subclip(0, video_clip.duration)<br />
+    else:<br />
+        padding_duration = video_clip.duration - audio_clip.duration<br />
+        padding = AudioFileClip.silence(duration=padding_duration)<br />
+        audio_clip = concatenate_audioclips([audio_clip, padding])<br />
+<br />
+    # Define fade durations<br />
+    fade_in_duration = 10  # seconds<br />
+    fade_out_duration = 15  # seconds<br />
+<br />
+    # Apply fade in effect to audio<br />
+    faded_audio = audio_clip.audio_fadein(fade_in_duration)<br />
+<br />
+    # Apply fade out effect to audio at the end<br />
+    final_audio = faded_audio.audio_fadeout(fade_out_duration)<br />
+<br />
+    # Set audio of the video to the processed audio<br />
+    video_with_audio = video_clip.set_audio(final_audio)<br />
+<br />
+    # Write the final video with audio to a file<br />
+    output_path = "/home/jack/Desktop/HDD500/collections/vids/slideshowSharp-music.mp4"<br />
+    video_with_audio.write_videofile(output_path, codec="libx264")<br />
+<br />
+    # Source file path<br />
+    source_file = output_path<br />
+<br />
+    # Destination directory where you want to save a copy with a UUID-based name<br />
+    destination_dir = "/home/jack/Desktop/HDD500/collections/vids/"<br />
+    id_ = output_path.split("/")<br />
+    print("Selected Directory:", id_[-1])<br />
+<br />
+    # Generate a UUID for the new file name<br />
+    new_filename = str(uuid.uuid4()) + "_" + id_[-1]<br />
+    print("New Filename:", new_filename)<br />
+<br />
+    # Combine the destination directory and the new filename to create the full destination path<br />
+    destination_path = os.path.join(destination_dir, new_filename)<br />
+<br />
+    # Copy the file to the destination directory with the new name<br />
+    shutil.copy(source_file, destination_path)<br />
+    print("Destination Path:", destination_path)<br />
+<br />
+if __name__ == "__main__":<br />
+    create_video()<br />
+```<br />
+<br />
+I've made the necessary corrections and added logging for important steps. This should help you avoid the issues you encountered in your previous code. Feel free to modify it further as needed.<br />
+<br />

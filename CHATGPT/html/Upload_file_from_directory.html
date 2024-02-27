@@ -1,0 +1,728 @@
+Upload file from directory<br />
+user<br />
+@app.route('/upload', methods=['POST'])<br />
+def upload():<br />
+    # Check if the POST request has the file part<br />
+    if 'file' not in request.files:<br />
+        return redirect(request.url)<br />
+    <br />
+    file = request.files['file']<br />
+    <br />
+    # Check if a file was selected<br />
+    if file.filename == '':<br />
+        return redirect(request.url)<br />
+    I only want the choice to select files from current_project/Narrators<br />
+ChatGPT<br />
+Based on the code snippet you provided, it seems that you are working with a Flask application and have defined a route for uploading files at `/upload`. To restrict the file selection to the `current_project/Narrators` directory, you can modify the code as follows:<br />
+<br />
+```python<br />
+import os<br />
+from flask import Flask, request, redirect<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+@app.route('/upload', methods=['POST'])<br />
+def upload():<br />
+    # Check if the POST request has the file part<br />
+    if 'file' not in request.files:<br />
+        return redirect(request.url)<br />
+    <br />
+    file = request.files['file']<br />
+    <br />
+    # Check if a file was selected<br />
+    if file.filename == '':<br />
+        return redirect(request.url)<br />
+    <br />
+    # Get the directory path<br />
+    directory = os.path.join(os.getcwd(), 'current_project/Narrators')<br />
+    <br />
+    # Check if the file is in the desired directory<br />
+    if not file.filename.startswith(directory):<br />
+        return "Invalid file selection. Please choose a file from 'current_project/Narrators' directory."<br />
+    <br />
+    # Continue with the file upload process<br />
+    # ...<br />
+    # (your code here)<br />
+    <br />
+    return "File uploaded successfully!"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run()<br />
+```<br />
+<br />
+In this modified code, the `directory` variable is set to the path of the `current_project/Narrators` directory using `os.path.join` to ensure platform compatibility. Then, we check if the selected file's filename starts with the desired directory path. If not, we return a message indicating that an invalid file selection was made.<br />
+<br />
+Note that this implementation assumes that the `current_project/Narrators` directory exists in the current working directory (`os.getcwd()`). You may need to adjust the path based on your specific file structure.<br />
+user<br />
+@app.route('/upload', methods=['POST'])<br />
+def upload():<br />
+    # Check if the POST request has the file part<br />
+    if 'file' not in request.files:<br />
+        return redirect(request.url)<br />
+    <br />
+    file = request.files['file']<br />
+    <br />
+    # Check if a file was selected<br />
+    if file.filename == '':<br />
+        return redirect(request.url)<br />
+    <br />
+    # Get the directory path<br />
+    directory = os.path.join(os.getcwd(), 'current_project/Narrators')<br />
+    <br />
+    # Check if the file is in the desired directory<br />
+    if not file.filename.startswith(directory):<br />
+        return "Invalid file selection. Please choose a file from 'current_project/Narrators' directory."<br />
+    <br />
+    file.save('static/TEMP.jpg')<br />
+    <br />
+    return redirect(url_for('text_mp3'))<br />
+I only want to see or choose from current_project/Narrators     no other choice possible <br />
+ChatGPT<br />
+If you want to restrict the file selection to only show or choose files from the `current_project/Narrators` directory and prevent any other choices, you can modify the code as follows:<br />
+<br />
+```python<br />
+import os<br />
+from flask import Flask, request, redirect, render_template<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+@app.route('/')<br />
+def index():<br />
+    return render_template('index.html')<br />
+<br />
+@app.route('/upload', methods=['POST'])<br />
+def upload():<br />
+    # Check if the POST request has the file part<br />
+    if 'file' not in request.files:<br />
+        return redirect(request.url)<br />
+<br />
+    file = request.files['file']<br />
+<br />
+    # Check if a file was selected<br />
+    if file.filename == '':<br />
+        return redirect(request.url)<br />
+<br />
+    # Get the directory path<br />
+    directory = os.path.join(os.getcwd(), 'current_project/Narrators')<br />
+<br />
+    # Check if the file is in the desired directory<br />
+    if not file.filename.startswith(directory):<br />
+        return "Invalid file selection. Please choose a file from 'current_project/Narrators' directory."<br />
+<br />
+    file.save('static/TEMP.jpg')<br />
+<br />
+    return redirect('/text_mp3')<br />
+<br />
+@app.route('/text_mp3')<br />
+def text_mp3():<br />
+    # Your code to handle the text to mp3 conversion<br />
+    return "Text to MP3 conversion completed successfully!"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run()<br />
+```<br />
+<br />
+In this modified code, I have added an additional route `/` that renders an `index.html` template. This template can be created in the `templates` directory and will contain an HTML form for file upload. Here's an example `index.html`:<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;File Upload&lt;/title&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    &lt;form action="/upload" method="post" enctype="multipart/form-data"&gt;<br />
+        &lt;input type="file" name="file" webkitdirectory directory multiple directory="current_project/Narrators" required&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+```<br />
+<br />
+This HTML form includes the `webkitdirectory` attribute, which allows selecting directories instead of individual files. The `directory` attribute is set to `current_project/Narrators`, which restricts the selection to that specific directory. Additionally, the `required` attribute ensures that a selection is made before submitting the form.<br />
+<br />
+By implementing this solution, users will only be able to select files from the `current_project/Narrators` directory, and any other file selections will be considered invalid.<br />
+user<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;head&gt;<br />
+        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+    &lt;/head&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    <br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;h1&gt;Upload Files&lt;/h1&gt;<br />
+    &lt;form method="POST" action="/uploads" enctype="multipart/form-data"&gt;<br />
+        &lt;label for="subdirectory"&gt;Select a subdirectory:&lt;/label&gt;<br />
+        &lt;select name="subdirectory" id="subdirectory"&gt;<br />
+            {% for subdirectory in subdirectories %}<br />
+                &lt;option value="{{ subdirectory }}"&gt;{{ subdirectory }}&lt;/option&gt;<br />
+            {% endfor %}<br />
+        &lt;/select&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="file" name="file"&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+    {% if image_path %}<br />
+    &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+    &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+{% endif %}<br />
+<br />
+&lt;a href="{{ url_for('index') }}"&gt;Return Home&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+<br />
+    &lt;!-- Rest of your HTML code --&gt;<br />
+<br />
+    &lt;a href="{{ url_for('upload_files') }}"&gt;Upload To:&lt;/a&gt;<br />
+<br />
+    &lt;!-- Rest of your HTML code --&gt;<br />
+<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+I still can choose any file in my computer I only want file listed in the drop down files from current_project/Narrators               <br />
+ChatGPT<br />
+To restrict file selection to the files listed in the dropdown menu from the `current_project/Narrators` directory, you can modify the code and add some JavaScript logic to dynamically update the file input options based on the selected subdirectory.<br />
+<br />
+First, update your HTML template as follows:<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;head&gt;<br />
+        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+    &lt;/head&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+<br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;h1&gt;Upload Files&lt;/h1&gt;<br />
+    &lt;form method="POST" action="/uploads" enctype="multipart/form-data"&gt;<br />
+        &lt;label for="subdirectory"&gt;Select a subdirectory:&lt;/label&gt;<br />
+        &lt;select name="subdirectory" id="subdirectory"&gt;<br />
+            {% for subdirectory in subdirectories %}<br />
+                &lt;option value="{{ subdirectory }}"&gt;{{ subdirectory }}&lt;/option&gt;<br />
+            {% endfor %}<br />
+        &lt;/select&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;label for="file"&gt;Select a file:&lt;/label&gt;<br />
+        &lt;select name="file" id="file"&gt;<br />
+            &lt;option value="" disabled selected&gt;Select a file&lt;/option&gt;<br />
+        &lt;/select&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+    {% if image_path %}<br />
+    &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+    &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+<br />
+    &lt;a href="{{ url_for('index') }}"&gt;Return Home&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        $(document).ready(function() {<br />
+            $('#subdirectory').on('change', function() {<br />
+                var subdirectory = $(this).val();<br />
+                if (subdirectory) {<br />
+                    $.ajax({<br />
+                        url: '/get_files',<br />
+                        type: 'POST',<br />
+                        data: { subdirectory: subdirectory },<br />
+                        success: function(response) {<br />
+                            $('#file').html(response);<br />
+                        }<br />
+                    });<br />
+                } else {<br />
+                    $('#file').html('&lt;option value="" disabled selected&gt;Select a file&lt;/option&gt;');<br />
+                }<br />
+            });<br />
+        });<br />
+    &lt;/script&gt;<br />
+<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+```<br />
+<br />
+In this updated code, the file input field is replaced with a dropdown menu with an initial disabled and selected option. The JavaScript code listens to the change event of the subdirectory dropdown menu. When a subdirectory is selected, an AJAX request is made to a new route `/get_files` to fetch the files in the selected subdirectory. The response from the server is used to populate the `file` dropdown menu dynamically.<br />
+<br />
+Next, you need to update your Flask application code with the `/get_files` route. Here's an example:<br />
+<br />
+```python<br />
+import os<br />
+from flask import Flask, request, render_template, jsonify<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+@app.route('/')<br />
+def index():<br />
+    subdirectories = get_subdirectories()<br />
+    return render_template('index.html', subdirectories=subdirectories)<br />
+<br />
+@app.route('/get_files', methods=['POST'])<br />
+def get_files():<br />
+    subdirectory = request.form.get('subdirectory')<br />
+    directory = os.path.join(os.getcwd(), 'current_project/Narrators', subdirectory)<br />
+    files = get_files_in_directory(directory)<br />
+    options = ''.join(f'&lt;option value="{file}"&gt;{file}&lt;/option&gt;' for file in files)<br />
+    return options<br />
+<br />
+@app.route('/uploads', methods=['POST'])<br />
+def upload():<br />
+    subdirectory = request.form.get('subdirectory')<br />
+    file = request.form.get('file')<br />
+    if subdirectory and file:<br />
+        # Perform file upload logic<br />
+        # ...<br />
+        return "File uploaded successfully!"<br />
+    else:<br />
+        return "Invalid file selection."<br />
+<br />
+def get<br />
+user<br />
+on my index page I have a button     Browser...        When I click it I want it to list files in current_project/Narrators        NO OTHER directories<br />
+ChatGPT<br />
+To achieve this, you can use JavaScript to trigger the file input dialog and set the initial directory to `current_project/Narrators`. Here's an updated version of the HTML template:<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;head&gt;<br />
+        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+    &lt;/head&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+<br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;h1&gt;Upload Files&lt;/h1&gt;<br />
+    &lt;form method="POST" action="/uploads" enctype="multipart/form-data"&gt;<br />
+        &lt;label for="subdirectory"&gt;Select a subdirectory:&lt;/label&gt;<br />
+        &lt;select name="subdirectory" id="subdirectory"&gt;<br />
+            {% for subdirectory in subdirectories %}<br />
+                &lt;option value="{{ subdirectory }}"&gt;{{ subdirectory }}&lt;/option&gt;<br />
+            {% endfor %}<br />
+        &lt;/select&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="button" value="Browser..." onclick="selectFiles()"&gt;<br />
+        &lt;input type="file" id="fileInput" name="file" style="display: none;" webkitdirectory directory="current_project/Narrators" multiple required&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+    {% if image_path %}<br />
+    &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+    &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+<br />
+    &lt;a href="{{ url_for('index') }}"&gt;Return Home&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        function selectFiles() {<br />
+            document.getElementById('fileInput').click();<br />
+        }<br />
+    &lt;/script&gt;<br />
+<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+```<br />
+<br />
+In this updated code, a new button with the label "Browser..." is added. When the button is clicked, it triggers the `selectFiles()` JavaScript function, which programmatically clicks the hidden file input element (`fileInput`). The file input element is set to be hidden (`display: none;`) and includes the `webkitdirectory` and `directory` attributes to restrict file selection to the `current_project/Narrators` directory.<br />
+<br />
+Now, when you click the "Browser..." button, it will open the file selection dialog with the initial directory set to `current_project/Narrators`, and users will only be able to select files from that directory.<br />
+user<br />
+What is this my index ??<br />
+ChatGPT<br />
+Apologies for the confusion. In the code snippet you provided, the HTML template you shared is typically used as the `index.html` file in your Flask application. It represents the content that is displayed on the index page of your website.<br />
+<br />
+To integrate the code into your Flask application, follow these steps:<br />
+<br />
+1. Create an `index.html` file in a `templates` directory within your project directory.<br />
+2. Paste the HTML code you provided into the `index.html` file.<br />
+3. Update your Flask application code to render the `index.html` template. Here's an example:<br />
+<br />
+```python<br />
+from flask import Flask, render_template<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+@app.route('/')<br />
+def index():<br />
+    # Perform any necessary logic<br />
+    subdirectories = ['current_project/Narrators']  # Example subdirectories list<br />
+    return render_template('index.html', subdirectories=subdirectories)<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run()<br />
+```<br />
+<br />
+Make sure your Flask application code is updated to render the `index.html` template correctly. The `subdirectories` variable in the example code should contain a list of subdirectories you want to display in the dropdown menu. Replace it with the appropriate logic to fetch the subdirectories dynamically.<br />
+<br />
+Note: Ensure that the `templates` directory is in the same directory as your Flask application file (Python file) and that the file name is spelled correctly (`index.html` in this case).<br />
+user<br />
+app.route('/', methods=['GET', 'POST'])<br />
+def index():<br />
+    # Perform any necessary logic<br />
+    subdirectories = ['current_project/Narrators']  # Example subdirectories list<br />
+    return render_template('index.html', subdirectories=subdirectories)                                          html--------------&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;head&gt;<br />
+        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+    &lt;/head&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    <br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/First-find-an-image-you-wish.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}"&gt;<br />
+        &lt;input type="file" name="file" accept="image/*"&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+    {% if image_path %}<br />
+        &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+<br />
+        &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+    &lt;br /&gt;Once you have selected your image above,&lt;br /&gt; <br />
+    you will be directed to add the text The avatar will speak.&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;mg src="static/TEMP.jpg" alt="Uploaded Image" style="width: 200px; height: auto;"&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/result_videoxx.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;a href="{{ url_for('generate_video') }}"&gt;Generate Video&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+    &lt;a href="{{ url_for('text_mp3') }}"&gt;create text/mp3&lt;/a&gt;<br />
+ <br />
+    &lt;a href="{{ url_for('upload_files') }}"&gt;Upload To:&lt;/a&gt;<br />
+ <br />
+<br />
+&lt;h1&gt;Run Command&lt;/h1&gt;<br />
+&lt;p&gt;After all the above steps are completed you see voice 'Speaking_Video' below this line.&lt;br /&gt;<br />
+    it is not lipsynced yet. press Run_Command to lipsyc the the video you see . &lt;br /&gt;<br />
+    The video is located here: static/final_video.mp4&lt;/p&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="static/final_video.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;span &gt;/mnt/HDD500/FLASK/MakeVideoMp4&lt;/span&gt;<br />
+    &lt;button onclick="runCommand()"&gt;Run_Command&lt;/button&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        function runCommand() {<br />
+            $.ajax({<br />
+                type: "GET",<br />
+                url: "/run_command",<br />
+                success: function(response) {<br />
+                    console.log(response);<br />
+                },<br />
+                error: function(xhr, status, error) {<br />
+                    console.error(error);<br />
+                }<br />
+            });<br />
+        }<br />
+    &lt;/script&gt;<br />
+&lt;a href="{{ url_for('apply_text_to_video') }}"&gt;Apply Text to an MP4&lt;/a&gt;<br />
+&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;h1&gt;Upload MP3&lt;/h1&gt;<br />
+    &lt;form action="/mp3_upload" method="post" enctype="multipart/form-data"&gt;<br />
+        &lt;input type="file" name="file" accept=".mp3"&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+<br />
+  <br />
+  &lt;a href="{{ url_for('final_lipsync') }}"&gt;The Last Lipsync Video Created&lt;/a&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+please do not send pieces and parts that will only confuse me more<br />
+ChatGPT<br />
+Apologies for the confusion. Here's the complete code that integrates the provided HTML template into your Flask application:<br />
+<br />
+```python<br />
+from flask import Flask, render_template, request, redirect, url_for<br />
+import os<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+@app.route('/', methods=['GET', 'POST'])<br />
+def index():<br />
+    if request.method == 'POST':<br />
+        file = request.files['file']<br />
+        if file.filename == '':<br />
+            return redirect(request.url)<br />
+        file.save('static/TEMP.jpg')<br />
+        return redirect(url_for('text_mp3'))<br />
+    else:<br />
+        subdirectories = ['current_project/Narrators']  # Example subdirectories list<br />
+        return render_template('index.html', subdirectories=subdirectories)<br />
+<br />
+@app.route('/text_mp3')<br />
+def text_mp3():<br />
+    # Perform any necessary logic<br />
+    return "Text to MP3 page"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run()<br />
+```<br />
+<br />
+Ensure that you have the following file structure:<br />
+<br />
+```<br />
+- your_project_directory/<br />
+  - app.py<br />
+  - static/<br />
+    - TEMP.jpg<br />
+  - templates/<br />
+    - index.html<br />
+```<br />
+<br />
+Place the HTML template code you provided inside the `index.html` file in the `templates` directory.<br />
+<br />
+When you run your Flask application and access the root URL (`http://localhost:5000/`), you should see the rendered `index.html` template with the file upload functionality. When you select a file and submit the form, it will save the uploaded file as `TEMP.jpg` in the `static` directory and redirect to the `text_mp3` page (which you can customize according to your requirements).<br />
+<br />
+Note: Make sure to update any other routes and functionality according to your application's needs.<br />
+user<br />
+index.html:                                        &lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;head&gt;<br />
+        &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+    &lt;/head&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    <br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/First-find-an-image-you-wish.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}"&gt;<br />
+        &lt;input type="file" name="file" accept="image/*"&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+    {% if image_path %}<br />
+        &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+<br />
+        &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+    &lt;br /&gt;Once you have selected your image above,&lt;br /&gt; <br />
+    you will be directed to add the text The avatar will speak.&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;mg src="static/TEMP.jpg" alt="Uploaded Image" style="width: 200px; height: auto;"&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/result_videoxx.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;a href="{{ url_for('generate_video') }}"&gt;Generate Video&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+    &lt;a href="{{ url_for('text_mp3') }}"&gt;create text/mp3&lt;/a&gt;<br />
+ <br />
+    &lt;a href="{{ url_for('upload_files') }}"&gt;Upload To:&lt;/a&gt;<br />
+ <br />
+<br />
+&lt;h1&gt;Run Command&lt;/h1&gt;<br />
+&lt;p&gt;After all the above steps are completed you see voice 'Speaking_Video' below this line.&lt;br /&gt;<br />
+    it is not lipsynced yet. press Run_Command to lipsyc the the video you see . &lt;br /&gt;<br />
+    The video is located here: static/final_video.mp4&lt;/p&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="static/final_video.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;span &gt;/mnt/HDD500/FLASK/MakeVideoMp4&lt;/span&gt;<br />
+    &lt;button onclick="runCommand()"&gt;Run_Command&lt;/button&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        function runCommand() {<br />
+            $.ajax({<br />
+                type: "GET",<br />
+                url: "/run_command",<br />
+                success: function(response) {<br />
+                    console.log(response);<br />
+                },<br />
+                error: function(xhr, status, error) {<br />
+                    console.error(error);<br />
+                }<br />
+            });<br />
+        }<br />
+    &lt;/script&gt;<br />
+&lt;a href="{{ url_for('apply_text_to_video') }}"&gt;Apply Text to an MP4&lt;/a&gt;<br />
+&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;h1&gt;Upload MP3&lt;/h1&gt;<br />
+    &lt;form action="/mp3_upload" method="post" enctype="multipart/form-data"&gt;<br />
+        &lt;input type="file" name="file" accept=".mp3"&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+<br />
+  <br />
+  &lt;a href="{{ url_for('final_lipsync') }}"&gt;The Last Lipsync Video Created&lt;/a&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+<br />
+ChatGPT<br />
+The provided `index.html` code seems to be a mix of different functionalities and routes. To integrate the file selection from the "current_project/Narrators" directory into the code, we need to modify the HTML and the corresponding Flask route.<br />
+<br />
+Here's an updated version of the `index.html` code:<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    <br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/First-find-an-image-you-wish.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}"&gt;<br />
+        &lt;label for="subdirectory"&gt;Select a subdirectory:&lt;/label&gt;<br />
+        &lt;select name="subdirectory" id="subdirectory"&gt;<br />
+            &lt;option value="current_project/Narrators"&gt;current_project/Narrators&lt;/option&gt;<br />
+        &lt;/select&gt;<br />
+        &lt;br&gt;&lt;br&gt;<br />
+        &lt;input type="file" name="file" accept="image/*" directory="current_project/Narrators" webkitdirectory&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+    {% if image_path %}<br />
+    &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+    &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+    &lt;br /&gt;Once you have selected your image above,&lt;br /&gt; <br />
+    you will be directed to add the text The avatar will speak.&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;img src="static/TEMP.jpg" alt="Uploaded Image" style="width: 200px; height: auto;"&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/result_videoxx.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;a href="{{ url_for('generate_video') }}"&gt;Generate Video&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+    &lt;a href="{{ url_for('text_mp3') }}"&gt;create text/mp3&lt;/a&gt;<br />
+ <br />
+    &lt;a href="{{ url_for('upload_files') }}"&gt;Upload To:&lt;/a&gt;<br />
+ <br />
+<br />
+    &lt;h1&gt;Run Command&lt;/h1&gt;<br />
+    &lt;p&gt;After all the above steps are completed, you will see the video 'Speaking_Video' below this line.&lt;br /&gt;<br />
+        It is not lip-synced yet. Press the "Run Command" button to lip-sync the video you see. &lt;br /&gt;<br />
+        The video is located here: static/final_video.mp4&lt;/p&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="static/final_video.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;span &gt;/mnt/HDD500/FLASK/MakeVideoMp4&lt;/span&gt;<br />
+    &lt;button onclick="runCommand()"&gt;Run Command&lt;/button&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        function runCommand() {<br />
+            $.ajax({<br />
+                type: "GET",<br />
+                url: "/run_command",<br />
+                success: function(response) {<br />
+                    console.log(response);<br />
+                },<br />
+                error: function(xhr, status, error) {<br />
+                    console.error(error);<br />
+                }<br />
+            });<br />
+        }<br />
+    &lt;/script&gt;<br />
+    &lt;a href="{{ url_for('apply_text_to_video') }}"&gt;Apply Text to an MP4&lt;/a&gt;<br />
+    &lt;br /&gt;&lt;br /&gt;<br />
+<br />
+    &lt;h1&gt;Upload MP3&lt;/h1&gt;<br />
+    &lt;form action="/mp3_upload" method="post" enctype="multipart/form-data"&gt;<br />
+        &lt;input type="file" name<br />
+user<br />
+this says Select a subdirectory: I need to select an image from that subdirectory<br />
+ChatGPT<br />
+Apologies for the confusion. If you want to select an image from the "current_project/Narrators" subdirectory, you can modify the HTML and Flask code as follows:<br />
+<br />
+index.html:<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Image Upload&lt;/title&gt;<br />
+    &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"&gt;&lt;/script&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    <br />
+    &lt;h1&gt;Upload an Image&lt;/h1&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/First-find-an-image-you-wish.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}"&gt;<br />
+        &lt;input type="hidden" name="subdirectory" value="current_project/Narrators"&gt;<br />
+        &lt;label for="image"&gt;Select an image:&lt;/label&gt;<br />
+        &lt;input type="file" name="file" accept="image/*" directory="current_project/Narrators" webkitdirectory&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+    {% if image_path %}<br />
+    &lt;h2&gt;Uploaded Image&lt;/h2&gt;<br />
+    &lt;img src="{{ image_path }}" alt="Uploaded Image"&gt;<br />
+    {% endif %}<br />
+    &lt;br /&gt;Once you have selected your image above,&lt;br /&gt; <br />
+    you will be directed to add the text The avatar will speak.&lt;br /&gt;&lt;br /&gt;<br />
+    &lt;img src="static/TEMP.jpg" alt="Uploaded Image" style="width: 200px; height: auto;"&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="../static/assets/result_videoxx.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+<br />
+    &lt;a href="{{ url_for('generate_video') }}"&gt;Generate Video&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;<br />
+    &lt;a href="{{ url_for('text_mp3') }}"&gt;create text/mp3&lt;/a&gt;<br />
+ <br />
+    &lt;a href="{{ url_for('upload_files') }}"&gt;Upload To:&lt;/a&gt;<br />
+ <br />
+<br />
+    &lt;h1&gt;Run Command&lt;/h1&gt;<br />
+    &lt;p&gt;After all the above steps are completed, you will see the video 'Speaking_Video' below this line.&lt;br /&gt;<br />
+        It is not lip-synced yet. Press the "Run Command" button to lip-sync the video you see. &lt;br /&gt;<br />
+        The video is located here: static/final_video.mp4&lt;/p&gt;<br />
+    &lt;video width="200" height="auto" controls&gt;<br />
+        &lt;source src="static/final_video.mp4" type="video/mp4"&gt;<br />
+    &lt;/video&gt;&lt;br /&gt;<br />
+    &lt;span &gt;/mnt/HDD500/FLASK/MakeVideoMp4&lt;/span&gt;<br />
+    &lt;button onclick="runCommand()"&gt;Run Command&lt;/button&gt;<br />
+<br />
+    &lt;script&gt;<br />
+        function runCommand() {<br />
+            $.ajax({<br />
+                type: "GET",<br />
+                url: "/run_command",<br />
+                success: function(response) {<br />
+                    console.log(response);<br />
+                },<br />
+                error: function(xhr, status, error) {<br />
+                    console.error(error);<br />
+                }<br />
+            });<br />
+        }<br />
+    &lt;/script&gt;<br />
+    &lt;a href="{{ url_for('apply_text_to_video') }}"&gt;Apply Text to an MP4&lt;/a&gt;<br />
+    &lt;br /&gt;&lt;br /&gt;<br />
+<br />
+    &lt;h1&gt;Upload MP3&lt;/h1&gt;<br />
+    &lt;form action="/mp3_upload" method="post" enctype="multipart/form-data"&gt;<br />
+        &lt;input type="file" name="file" accept=".mp3"&gt;<br />
+        &lt;input type="submit" value="Upload"&gt;<br />
+    &lt;/form&gt;<br />
+<br />
+    &lt;a href="{{ url_for('final_lipsync') }}"&gt;The Last Lipsync Video Created&lt;/a&gt;<br />
+&lt;/<br />
+user<br />
+it keeps getting worse not a bit better ... forget everything lets start over<br />
+ChatGPT<br />
+I apologize if the previous responses were not helpful. Let's start fresh. Please provide the details of what you would like to achieve on your index page, including the functionality and the desired behavior of the button or file selection.<br />
+<br />

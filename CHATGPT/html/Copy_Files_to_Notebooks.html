@@ -1,0 +1,364 @@
+Copy Files to Notebooks<br />
+user<br />
+from pathlib import Path<br />
+import shutil<br />
+files = open("ALL-IPYNB.list").readlines()<br />
+for file in files:<br />
+    file = file.replace("\n","")<br />
+    print(file)<br />
+    #shutil.copy2(os.path.join(src,fname), trg)<br />
+    shutil.copy2(file, "notebooks")<br />
+    #shutil.copy2(os.path.join(src,fname), trg)<br />
+this did not copy the files into notebooks<br />
+ChatGPT<br />
+It seems like you're trying to copy files listed in the "ALL-IPYNB.list" file into a directory named "notebooks". However, there might be an issue with the paths or the way you're using the `shutil.copy2` function. Let's correct and improve your script. I'll incorporate logging to help with debugging as well. Here's the modified version:<br />
+<br />
+```python<br />
+import os<br />
+import shutil<br />
+import logging<br />
+<br />
+# Set up logging<br />
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')<br />
+<br />
+# Define the source directory where the files are located<br />
+source_dir = "."<br />
+<br />
+# Define the target directory where you want to copy the files<br />
+target_dir = "notebooks"<br />
+<br />
+# Create the target directory if it doesn't exist<br />
+os.makedirs(target_dir, exist_ok=True)<br />
+<br />
+# Read the list of files to copy<br />
+files_list_path = "ALL-IPYNB.list"<br />
+with open(files_list_path, "r") as file:<br />
+    files = file.readlines()<br />
+<br />
+# Iterate over each file in the list<br />
+for file_path in files:<br />
+    # Remove any trailing newline characters<br />
+    file_path = file_path.strip()<br />
+    <br />
+    # Construct the full source file path<br />
+    source_file_path = os.path.join(source_dir, file_path)<br />
+    <br />
+    # Check if the file exists<br />
+    if os.path.exists(source_file_path):<br />
+        # Construct the full target file path<br />
+        target_file_path = os.path.join(target_dir, os.path.basename(file_path))<br />
+        <br />
+        try:<br />
+            # Copy the file to the target directory<br />
+            shutil.copy2(source_file_path, target_file_path)<br />
+            logging.info(f"Successfully copied '{file_path}' to '{target_file_path}'")<br />
+        except Exception as e:<br />
+            logging.error(f"Error copying '{file_path}': {e}")<br />
+    else:<br />
+        logging.warning(f"File '{file_path}' does not exist.")<br />
+<br />
+logging.info("File copying process completed.")<br />
+```<br />
+<br />
+This script will copy the files listed in "ALL-IPYNB.list" from the current directory to the "notebooks" directory. It includes logging to track the progress and any errors that might occur during the copying process. Make sure to adjust the paths and directories according to your specific setup. Let me know if you need further assistance!<br />
+user<br />
+source_dir = "."<br />
+I do not unserstand this <br />
+the sources are in the list<br />
+ChatGPT<br />
+Apologies for the confusion. Let's adjust the script so that the source directory is derived from the paths listed in the "ALL-IPYNB.list" file. Here's the modified version:<br />
+<br />
+```python<br />
+import os<br />
+import shutil<br />
+import logging<br />
+<br />
+# Set up logging<br />
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')<br />
+<br />
+# Define the target directory where you want to copy the files<br />
+target_dir = "notebooks"<br />
+<br />
+# Create the target directory if it doesn't exist<br />
+os.makedirs(target_dir, exist_ok=True)<br />
+<br />
+# Read the list of files to copy<br />
+files_list_path = "ALL-IPYNB.list"<br />
+with open(files_list_path, "r") as file:<br />
+    files = file.readlines()<br />
+<br />
+# Iterate over each file in the list<br />
+for file_path in files:<br />
+    # Remove any trailing newline characters<br />
+    file_path = file_path.strip()<br />
+    <br />
+    # Check if the file exists<br />
+    if os.path.exists(file_path):<br />
+        # Construct the full target file path<br />
+        target_file_path = os.path.join(target_dir, os.path.basename(file_path))<br />
+        <br />
+        try:<br />
+            # Copy the file to the target directory<br />
+            shutil.copy2(file_path, target_file_path)<br />
+            logging.info(f"Successfully copied '{file_path}' to '{target_file_path}'")<br />
+        except Exception as e:<br />
+            logging.error(f"Error copying '{file_path}': {e}")<br />
+    else:<br />
+        logging.warning(f"File '{file_path}' does not exist.")<br />
+<br />
+logging.info("File copying process completed.")<br />
+```<br />
+<br />
+In this version, the script reads each file path from "ALL-IPYNB.list" and uses it directly as the source path for copying. We don't need to specify a separate source directory since the file paths themselves contain the necessary information. Let me know if you need further clarification!<br />
+user<br />
+rename duplicate file or add uuuid to the file name<br />
+ChatGPT<br />
+To handle duplicate file names, we can append a UUID (Universally Unique Identifier) to the file name before copying it. This ensures uniqueness and avoids overwriting existing files with the same name. Here's the updated script with this modification:<br />
+<br />
+```python<br />
+import os<br />
+import shutil<br />
+import logging<br />
+import uuid<br />
+<br />
+# Set up logging<br />
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')<br />
+<br />
+# Define the target directory where you want to copy the files<br />
+target_dir = "notebooks"<br />
+<br />
+# Create the target directory if it doesn't exist<br />
+os.makedirs(target_dir, exist_ok=True)<br />
+<br />
+# Read the list of files to copy<br />
+files_list_path = "ALL-IPYNB.list"<br />
+with open(files_list_path, "r") as file:<br />
+    files = file.readlines()<br />
+<br />
+# Iterate over each file in the list<br />
+for file_path in files:<br />
+    # Remove any trailing newline characters<br />
+    file_path = file_path.strip()<br />
+    <br />
+    # Check if the file exists<br />
+    if os.path.exists(file_path):<br />
+        # Construct the target file name with a UUID appended<br />
+        target_file_name = f"{os.path.basename(file_path)}_{uuid.uuid4().hex}{os.path.splitext(file_path)[1]}"<br />
+        <br />
+        # Construct the full target file path<br />
+        target_file_path = os.path.join(target_dir, target_file_name)<br />
+        <br />
+        try:<br />
+            # Copy the file to the target directory<br />
+            shutil.copy2(file_path, target_file_path)<br />
+            logging.info(f"Successfully copied '{file_path}' to '{target_file_path}'")<br />
+        except Exception as e:<br />
+            logging.error(f"Error copying '{file_path}': {e}")<br />
+    else:<br />
+        logging.warning(f"File '{file_path}' does not exist.")<br />
+<br />
+logging.info("File copying process completed.")<br />
+```<br />
+<br />
+With this modification, each copied file in the "notebooks" directory will have a UUID appended to its name, ensuring that duplicates are handled without overwriting existing files. Let me know if you need further assistance!<br />
+user<br />
+71 _mnt_HDD500_TENSORFLOW_output_output.txt output Date :Tue Feb 14 08:25:37 2023<br />
+Traceback (most recent call last):<br />
+  File "/home/jack/Desktop/test/insertTXT.py", line 46, in &lt;module&gt;<br />
+    c.execute("INSERT INTO ipynb (file, content, description) VALUES(?, ?, ?)", <br />
+OverflowError: BLOB longer than INT_MAX bytes<br />
+how can i skip this type od f error and continue<br />
+ChatGPT<br />
+To handle the `OverflowError` caused by BLOB (Binary Large Object) data longer than INT_MAX bytes, you can catch the exception and log it, then continue with the next file. Here's how you can modify the script to achieve this:<br />
+<br />
+```python<br />
+import os<br />
+import shutil<br />
+import logging<br />
+import sqlite3<br />
+<br />
+# Set up logging<br />
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')<br />
+<br />
+# Define the target directory where you want to copy the files<br />
+target_dir = "notebooks"<br />
+<br />
+# Create the target directory if it doesn't exist<br />
+os.makedirs(target_dir, exist_ok=True)<br />
+<br />
+# Read the list of files to copy<br />
+files_list_path = "ALL-IPYNB.list"<br />
+with open(files_list_path, "r") as file:<br />
+    files = file.readlines()<br />
+<br />
+# Iterate over each file in the list<br />
+for file_path in files:<br />
+    # Remove any trailing newline characters<br />
+    file_path = file_path.strip()<br />
+    <br />
+    # Check if the file exists<br />
+    if os.path.exists(file_path):<br />
+        # Construct the target file name<br />
+        target_file_name = os.path.basename(file_path)<br />
+        <br />
+        # Construct the full target file path<br />
+        target_file_path = os.path.join(target_dir, target_file_name)<br />
+        <br />
+        try:<br />
+            # Copy the file to the target directory<br />
+            shutil.copy2(file_path, target_file_path)<br />
+            logging.info(f"Successfully copied '{file_path}' to '{target_file_path}'")<br />
+        except Exception as e:<br />
+            logging.error(f"Error copying '{file_path}': {e}")<br />
+            continue  # Skip to the next file if an error occurs<br />
+    else:<br />
+        logging.warning(f"File '{file_path}' does not exist.")<br />
+<br />
+logging.info("File copying process completed.")<br />
+```<br />
+<br />
+With this modification, if an `OverflowError` occurs during the copying process, the script will log the error and continue with the next file without terminating the entire process. Let me know if you need further assistance!<br />
+user<br />
+%%writefile insertTXT.py<br />
+import sqlite3<br />
+import re<br />
+import sys<br />
+import time<br />
+import os<br />
+database = "all4.db"<br />
+#database = "junk2.db"<br />
+conn = sqlite3.connect(database)<br />
+conn.text_factory = lambda x: unicode(x, "utf-8", "ignore")<br />
+c = conn.cursor()<br />
+c.execute("""<br />
+CREATE VIRTUAL TABLE IF NOT EXISTS ipynb <br />
+USING FTS4(file, content, description);<br />
+""")<br />
+conn.commit()<br />
+conn.close()<br />
+conn = sqlite3.connect(database)<br />
+c = conn.cursor()<br />
+count=1<br />
+titlelist = "all_files4.txt"<br />
+titles = open(titlelist,"r")<br />
+for title in titles.readlines():<br />
+    title = title.replace("\n", "")<br />
+    dt=time.ctime(os.path.getctime(title))<br />
+    dt=str(dt)<br />
+    filename = os.path.basename(title)<br />
+    # Use for debug print filename,":"<br />
+    description = filename<br />
+    description = description.replace("-", " ")<br />
+    description = description.replace("_", " ")<br />
+    description = description.replace(".txt", " ")<br />
+    description = re.sub("([a-z])([A-Z])","\g&lt;1&gt; \g&lt;2&gt;",description)<br />
+    <br />
+    <br />
+    dt=time.ctime(os.path.getctime(title))<br />
+    dt=str(dt)<br />
+    #dt = dt.replace(" ","")<br />
+    description = description+"Date :"+dt<br />
+    suf = title.replace("/home/jack/","")<br />
+    suf = suf.replace(".txt","_")<br />
+    suf = suf.replace("/","_")<br />
+    filename = suf+filename<br />
+    with open(title, "rb") as input_file:<br />
+                ablob = input_file.read()<br />
+                content  = sqlite3.Binary(ablob)<br />
+                c.execute("INSERT INTO ipynb (file, content, description) VALUES(?, ?, ?)", <br />
+                      (filename, content, description))<br />
+                <br />
+                conn.commit()<br />
+    line = filename<br />
+    #line ="Good-mouse-sizing-and-cropping.ipynb"<br />
+    index = "Index"<br />
+    c.execute("INSERT INTO ipynb VALUES (?,?,?)", (index, filename, description)) <br />
+    conn.commit()<br />
+    count=count+1<br />
+    print (count,filename, description)<br />
+<br />
+c.close()<br />
+conn.close() <br />
+ this is the file <br />
+ChatGPT<br />
+To handle errors like `OverflowError` and continue processing the files, you can implement exception handling around the code that might raise such errors. Here's how you can modify your script to handle these errors:<br />
+<br />
+```python<br />
+import sqlite3<br />
+import re<br />
+import sys<br />
+import time<br />
+import os<br />
+<br />
+def insert_file_into_database(filename, content, description, conn, c):<br />
+    try:<br />
+        c.execute("INSERT INTO ipynb (file, content, description) VALUES (?, ?, ?)", <br />
+                  (filename, content, description))<br />
+        conn.commit()<br />
+        print(f"Inserted '{filename}' into the database.")<br />
+    except Exception as e:<br />
+        print(f"Error inserting '{filename}' into the database: {e}")<br />
+<br />
+def main():<br />
+    database = "all4.db"<br />
+    conn = sqlite3.connect(database)<br />
+    conn.text_factory = lambda x: unicode(x, "utf-8", "ignore")<br />
+    c = conn.cursor()<br />
+    c.execute("""<br />
+    CREATE VIRTUAL TABLE IF NOT EXISTS ipynb <br />
+    USING FTS4(file, content, description);<br />
+    """)<br />
+    conn.commit()<br />
+<br />
+    count = 1<br />
+    titlelist = "all_files4.txt"<br />
+    titles = open(titlelist, "r")<br />
+    for title in titles.readlines():<br />
+        title = title.strip()<br />
+        dt = time.ctime(os.path.getctime(title))<br />
+        dt = str(dt)<br />
+        filename = os.path.basename(title)<br />
+        description = filename<br />
+        description = description.replace("-", " ")<br />
+        description = description.replace("_", " ")<br />
+        description = description.replace(".txt", " ")<br />
+        description = re.sub("([a-z])([A-Z])","\g&lt;1&gt; \g&lt;2&gt;", description)<br />
+        dt = time.ctime(os.path.getctime(title))<br />
+        dt = str(dt)<br />
+        description = description + "Date :" + dt<br />
+        suf = title.replace("/home/jack/", "")<br />
+        suf = suf.replace(".txt", "_")<br />
+        suf = suf.replace("/", "_")<br />
+        filename = suf + filename<br />
+        try:<br />
+            with open(title, "rb") as input_file:<br />
+                ablob = input_file.read()<br />
+                content = sqlite3.Binary(ablob)<br />
+                insert_file_into_database(filename, content, description, conn, c)<br />
+        except OverflowError as oe:<br />
+            print(f"Skipping '{filename}' due to OverflowError.")<br />
+        except Exception as e:<br />
+            print(f"Error processing '{filename}': {e}")<br />
+<br />
+        line = filename<br />
+        index = "Index"<br />
+        c.execute("INSERT INTO ipynb VALUES (?, ?, ?)", (index, filename, description)) <br />
+        conn.commit()<br />
+        count += 1<br />
+        print(count, filename, description)<br />
+<br />
+    c.close()<br />
+    conn.close()<br />
+<br />
+if __name__ == "__main__":<br />
+    main()<br />
+```<br />
+<br />
+In this modified script:<br />
+- I've encapsulated the insertion of files into the database within a function `insert_file_into_database`. This makes the code more modular and easier to manage.<br />
+- I've added exception handling around the file insertion process. If an `OverflowError` occurs, the script will print a message indicating the error and continue processing the next file.<br />
+- Other exceptions are caught and printed for debugging purposes.<br />
+- The main code execution is now within a `main()` function, which is called at the end of the script if it's run as the main module (`__name__ == "__main__"`).<br />
+<br />
+This should help you handle errors gracefully and continue with processing the remaining files. Let me know if you need further assistance!<br />
+<br />

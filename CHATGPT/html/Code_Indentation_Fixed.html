@@ -1,0 +1,283 @@
+Code Indentation Fixed<br />
+user<br />
+import librosa<br />
+import librosa.filters<br />
+import numpy as np<br />
+# import tensorflow as tf<br />
+from scipy import signal<br />
+from scipy.io import wavfile<br />
+from hparams import hparams as hp<br />
+<br />
+def load_wav(path, sr):<br />
+    return librosa.core.load(path, sr=sr)[0]<br />
+<br />
+def save_wav(wav, path, sr):<br />
+    wav *= 32767 / max(0.01, np.max(np.abs(wav)))<br />
+    #proposed by @dsmiller<br />
+    wavfile.write(path, sr, wav.astype(np.int16))<br />
+<br />
+def save_wavenet_wav(wav, path, sr):<br />
+    librosa.output.write_wav(path, wav, sr=sr)<br />
+<br />
+def preemphasis(wav, k, preemphasize=True):<br />
+    if preemphasize:<br />
+        return signal.lfilter([1, -k], [1], wav)<br />
+    return wav<br />
+<br />
+def inv_preemphasis(wav, k, inv_preemphasize=True):<br />
+    if inv_preemphasize:<br />
+        return signal.lfilter([1], [1, -k], wav)<br />
+    return wav<br />
+<br />
+def get_hop_size():<br />
+    hop_size = hp.hop_size<br />
+    if hop_size is None:<br />
+        assert hp.frame_shift_ms is not None<br />
+        hop_size = int(hp.frame_shift_ms / 1000 * hp.sample_rate)<br />
+    return hop_size<br />
+<br />
+def linearspectrogram(wav):<br />
+    D = _stft(preemphasis(wav, hp.preemphasis, hp.preemphasize))<br />
+    S = _amp_to_db(np.abs(D)) - hp.ref_level_db<br />
+    <br />
+    if hp.signal_normalization:<br />
+        return _normalize(S)<br />
+    return S<br />
+<br />
+def melspectrogram(wav):<br />
+    D = _stft(preemphasis(wav, hp.preemphasis, hp.preemphasize))<br />
+    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hp.ref_level_db<br />
+    <br />
+    if hp.signal_normalization:<br />
+        return _normalize(S)<br />
+    return S<br />
+<br />
+def _lws_processor():<br />
+    import lws<br />
+    return lws.lws(hp.n_fft, get_hop_size(), fftsize=hp.win_size, mode="speech")<br />
+<br />
+def _stft(y):<br />
+    if hp.use_lws:<br />
+        return _lws_processor(hp).stft(y).T<br />
+    else:<br />
+        return librosa.stft(y=y, n_fft=hp.n_fft, hop_length=get_hop_size(), win_length=hp.win_size)<br />
+<br />
+##########################################################<br />
+#Those are only correct when using lws!!! (This was messing with Wavenet quality for a long time!)<br />
+def num_frames(length, fsize, fshift):<br />
+    """Compute number of time frames of spectrogram<br />
+    """<br />
+    pad = (fsize - fshift)<br />
+    if length % fshift == 0:<br />
+        M = (length + pad * 2 - fsize) // fshift + 1<br />
+    else:<br />
+        M = (length + pad * 2 - fsize) // fshift + 2<br />
+    return M<br />
+<br />
+<br />
+def pad_lr(x, fsize, fshift):<br />
+    """Compute left and right padding<br />
+    """<br />
+    M = num_frames(len(x), fsize, fshift)<br />
+    pad = (fsize - fshift)<br />
+    T = len(x) + 2 * pad<br />
+    r = (M - 1) * fshift + fsize - T<br />
+    return pad, pad + r<br />
+##########################################################<br />
+#Librosa correct padding<br />
+def librosa_pad_lr(x, fsize, fshift):<br />
+    return 0, (x.shape[0] // fshift + 1) * fshift - x.shape[0]<br />
+<br />
+# Conversions<br />
+_mel_basis = None<br />
+<br />
+def _linear_to_mel(spectogram):<br />
+    global _mel_basis<br />
+    if _mel_basis is None:<br />
+        _mel_basis = _build_mel_basis()<br />
+    return np.dot(_mel_basis, spectogram)<br />
+<br />
+def _build_mel_basis():<br />
+    assert hp.fmax &lt;= hp.sample_rate // 2<br />
+    return librosa.filters.mel(hp.sample_rate, hp.n_fft, n_mels=hp.num_mels, **kwargs)<br />
+    #return librosa.filters.mel(hp.sample_rate, hp.n_fft, n_mels=hp.num_mels,<br />
+                               fmin=hp.fmin, fmax=hp.fmax)<br />
+<br />
+def _amp_to_db(x):<br />
+    min_level = np.exp(hp.min_level_db / 20 * np.log(10))<br />
+    return 20 * np.log10(np.maximum(min_level, x))<br />
+<br />
+def _db_to_amp(x):<br />
+    return np.power(10.0, (x) * 0.05)<br />
+<br />
+def _normalize(S):<br />
+    if hp.allow_clipping_in_normalization:<br />
+        if hp.symmetric_mels:<br />
+            return np.clip((2 * hp.max_abs_value) * ((S - hp.min_level_db) / (-hp.min_level_db)) - hp.max_abs_value,<br />
+                           -hp.max_abs_value, hp.max_abs_value)<br />
+        else:<br />
+            return np.clip(hp.max_abs_value * ((S - hp.min_level_db) / (-hp.min_level_db)), 0, hp.max_abs_value)<br />
+    <br />
+    assert S.max() &lt;= 0 and S.min() - hp.min_level_db &gt;= 0<br />
+    if hp.symmetric_mels:<br />
+        return (2 * hp.max_abs_value) * ((S - hp.min_level_db) / (-hp.min_level_db)) - hp.max_abs_value<br />
+    else:<br />
+        return hp.max_abs_value * ((S - hp.min_level_db) / (-hp.min_level_db))<br />
+<br />
+def _denormalize(D):<br />
+    if hp.allow_clipping_in_normalization:<br />
+        if hp.symmetric_mels:<br />
+            return (((np.clip(D, -hp.max_abs_value,<br />
+                              hp.max_abs_value) + hp.max_abs_value) * -hp.min_level_db / (2 * hp.max_abs_value))<br />
+                    + hp.min_level_db)<br />
+        else:<br />
+            return ((np.clip(D, 0, hp.max_abs_value) * -hp.min_level_db / hp.max_abs_value) + hp.min_level_db)<br />
+    <br />
+    if hp.symmetric_mels:<br />
+        return (((D + hp.max_abs_value) * -hp.min_level_db / (2 * hp.max_abs_value)) + hp.min_level_db)<br />
+    else:<br />
+        return ((D * -hp.min_level_db / hp.max_abs_value) + hp.min_level_db)<br />
+I get an indent error ??<br />
+ChatGPT<br />
+I see an issue with the code indentation. It appears to be a mix of tabs and spaces, which can lead to an indentation error. Python requires consistent indentation using either spaces or tabs, but not both in the same script. To resolve this issue and provide you with the corrected code, I'll make sure that the entire script uses spaces for indentation:<br />
+<br />
+```python<br />
+import librosa<br />
+import librosa.filters<br />
+import numpy as np<br />
+# import tensorflow as tf<br />
+from scipy import signal<br />
+from scipy.io import wavfile<br />
+from hparams import hparams as hp<br />
+<br />
+def load_wav(path, sr):<br />
+    return librosa.core.load(path, sr=sr)[0]<br />
+<br />
+def save_wav(wav, path, sr):<br />
+    wav *= 32767 / max(0.01, np.max(np.abs(wav)))<br />
+    # proposed by @dsmiller<br />
+    wavfile.write(path, sr, wav.astype(np.int16))<br />
+<br />
+def save_wavenet_wav(wav, path, sr):<br />
+    librosa.output.write_wav(path, wav, sr=sr)<br />
+<br />
+def preemphasis(wav, k, preemphasize=True):<br />
+    if preemphasize:<br />
+        return signal.lfilter([1, -k], [1], wav)<br />
+    return wav<br />
+<br />
+def inv_preemphasis(wav, k, inv_preemphasize=True):<br />
+    if inv_preemphasize:<br />
+        return signal.lfilter([1], [1, -k], wav)<br />
+    return wav<br />
+<br />
+def get_hop_size():<br />
+    hop_size = hp.hop_size<br />
+    if hop_size is None:<br />
+        assert hp.frame_shift_ms is not None<br />
+        hop_size = int(hp.frame_shift_ms / 1000 * hp.sample_rate)<br />
+    return hop_size<br />
+<br />
+def linearspectrogram(wav):<br />
+    D = _stft(preemphasis(wav, hp.preemphasis, hp.preemphasize))<br />
+    S = _amp_to_db(np.abs(D)) - hp.ref_level_db<br />
+    <br />
+    if hp.signal_normalization:<br />
+        return _normalize(S)<br />
+    return S<br />
+<br />
+def melspectrogram(wav):<br />
+    D = _stft(preemphasis(wav, hp.preemphasis, hp.preemphasize))<br />
+    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hp.ref_level_db<br />
+    <br />
+    if hp.signal_normalization:<br />
+        return _normalize(S)<br />
+    return S<br />
+<br />
+def _lws_processor():<br />
+    import lws<br />
+    return lws.lws(hp.n_fft, get_hop_size(), fftsize=hp.win_size, mode="speech")<br />
+<br />
+def _stft(y):<br />
+    if hp.use_lws:<br />
+        return _lws_processor(hp).stft(y).T<br />
+    else:<br />
+        return librosa.stft(y=y, n_fft=hp.n_fft, hop_length=get_hop_size(), win_length=hp.win_size)<br />
+<br />
+# Those are only correct when using lws!!! (This was messing with Wavenet quality for a long time!)<br />
+def num_frames(length, fsize, fshift):<br />
+    """Compute the number of time frames of the spectrogram<br />
+    """<br />
+    pad = (fsize - fshift)<br />
+    if length % fshift == 0:<br />
+        M = (length + pad * 2 - fsize) // fshift + 1<br />
+    else:<br />
+        M = (length + pad * 2 - fsize) // fshift + 2<br />
+    return M<br />
+<br />
+def pad_lr(x, fsize, fshift):<br />
+    """Compute left and right padding<br />
+    """<br />
+    M = num_frames(len(x), fsize, fshift)<br />
+    pad = (fsize - fshift)<br />
+    T = len(x) + 2 * pad<br />
+    r = (M - 1) * fshift + fsize - T<br />
+    return pad, pad + r<br />
+<br />
+# Librosa correct padding<br />
+def librosa_pad_lr(x, fsize, fshift):<br />
+    return 0, (x.shape[0] // fshift + 1) * fshift - x.shape[0]<br />
+<br />
+# Conversions<br />
+_mel_basis = None<br />
+<br />
+def _linear_to_mel(spectogram):<br />
+    global _mel_basis<br />
+    if _mel_basis is None:<br />
+        _mel_basis = _build_mel_basis()<br />
+    return np.dot(_mel_basis, spectogram)<br />
+<br />
+def _build_mel_basis():<br />
+    assert hp.fmax &lt;= hp.sample_rate // 2<br />
+    return librosa.filters.mel(hp.sample_rate, hp.n_fft, n_mels=hp.num_mels, **kwargs)<br />
+    # return librosa.filters.mel(hp.sample_rate, hp.n_fft, n_mels=hp.num_mels,<br />
+    #                           fmin=hp.fmin, fmax=hp.fmax)<br />
+<br />
+def _amp_to_db(x):<br />
+    min_level = np.exp(hp.min_level_db / 20 * np.log(10))<br />
+    return 20 * np.log10(np.maximum(min_level, x))<br />
+<br />
+def _db_to_amp(x):<br />
+    return np.power(10.0, (x) * 0.05)<br />
+<br />
+def _normalize(S):<br />
+    if hp.allow_clipping_in_normalization:<br />
+        if hp.symmetric_mels:<br />
+            return np.clip((2 * hp.max_abs_value) * ((S - hp.min_level_db) / (-hp.min_level_db)) - hp.max_abs_value,<br />
+                           -hp.max_abs_value, hp.max_abs_value)<br />
+        else:<br />
+            return np.clip(hp.max_abs_value * ((S - hp.min_level_db) / (-hp.min_level_db)), 0, hp.max_abs_value)<br />
+    <br />
+    assert S.max() &lt;= 0 and S.min() - hp.min_level_db &gt;= 0<br />
+    if hp.symmetric_mels:<br />
+        return (2 * hp.max_abs_value) * ((S - hp.min_level_db) / (-hp.min_level_db)) - hp.max_abs_value<br />
+    else:<br />
+        return hp.max_abs_value * ((S - hp.min_level_db) / (-hp.min_level_db))<br />
+<br />
+def _denormalize(D):<br />
+    if hp.allow_clipping_in_normalization:<br />
+        if hp.symmetric_mels:<br />
+            return (((np.clip(D, -hp.max_abs_value,<br />
+                              hp.max_abs_value) + hp.max_abs_value) * -hp.min_level_db / (2 * hp.max_abs_value))<br />
+                    + hp.min_level_db)<br />
+        else:<br />
+            return ((np.clip(D, 0, hp.max_abs_value) * -hp.min_level_db / hp.max_abs_value) + hp.min_level_db)<br />
+    <br />
+    if hp.symmetric_mels:<br />
+        return (((D + hp.max_abs_value) * -hp.min_level_db / (2 * hp.max_abs_value)) + hp.min_level_db)<br />
+    else:<br />
+        return ((D * -hp.min_level_db / hp.max_abs_value) + hp.min_level_db)<br />
+```<br />
+<br />
+I've fixed the indentation issue in the code. If you encounter any other issues or have further questions, please let me know.<br />
+<br />

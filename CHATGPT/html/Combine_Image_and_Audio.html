@@ -1,0 +1,76 @@
+Combine Image and Audio<br />
+user<br />
+from moviepy.editor import VideoClip<br />
+from moviepy.audio.io.AudioFileClip import AudioFileClip<br />
+from PIL import Image<br />
+<br />
+image_path = '/home/jack/Desktop/HDD500/collections/Avatar_resources/1080_2022-12-05-07_141670195699.png'<br />
+image_=Image.open(image_path)<br />
+audio_path = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_audio.wav'<br />
+<br />
+image = VideoClip(lambda t: image_, duration=AudioFileClip(audio_path).duration)<br />
+audio = AudioFileClip(audio_path)<br />
+<br />
+output_file = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_video.mp4'<br />
+video = image.set_audio(audio)<br />
+<br />
+video.write_videofile(output_file, codec='libx264', audio_codec='aac')<br />
+<br />
+ChatGPT<br />
+It appears that you are trying to use the MoviePy library to create a video by combining an image and an audio file. However, it seems that you have not provided a question or any specific issue you are facing. If you have any questions or encounter any errors, please let me know, and I'll be happy to help you.<br />
+user<br />
+---------------------------------------------------------------------------<br />
+AttributeError                            Traceback (most recent call last)<br />
+Cell In[40], line 9<br />
+      6 image_=Image.open(image_path)<br />
+      7 audio_path = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_audio.wav'<br />
+----&gt; 9 image = VideoClip(lambda t: image_, duration=AudioFileClip(audio_path).duration)<br />
+     10 audio = AudioFileClip(audio_path)<br />
+     12 output_file = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_video.mp4'<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/moviepy/video/VideoClip.py:86, in VideoClip.__init__(self, make_frame, ismask, duration, has_constant_size)<br />
+     84 if make_frame:<br />
+     85     self.make_frame = make_frame<br />
+---&gt; 86     self.size = self.get_frame(0).shape[:2][::-1]<br />
+     87 self.ismask = ismask<br />
+     88 self.has_constant_size=has_constant_size<br />
+<br />
+File ~/miniconda3/envs/cloned_base/lib/python3.9/site-packages/PIL/Image.py:519, in Image.__getattr__(self, name)<br />
+    512     warnings.warn(<br />
+    513         "Image categories are deprecated and will be removed in Pillow 10 "<br />
+    514         "(2023-07-01). Use is_animated instead.",<br />
+    515         DeprecationWarning,<br />
+    516         stacklevel=2,<br />
+    517     )<br />
+    518     return self._category<br />
+--&gt; 519 raise AttributeError(name)<br />
+<br />
+AttributeError: shape<br />
+<br />
+ChatGPT<br />
+The error you encountered is due to a problem with the `Image` object from the PIL library. The `Image` object does not have a `shape` attribute, which is causing the `AttributeError`. <br />
+<br />
+To resolve this issue, you can convert the `Image` object to a NumPy array and then retrieve its shape. Here's an updated version of your code that includes this change:<br />
+<br />
+```python<br />
+from moviepy.editor import VideoClip<br />
+from moviepy.audio.io.AudioFileClip import AudioFileClip<br />
+from PIL import Image<br />
+import numpy as np<br />
+<br />
+image_path = '/home/jack/Desktop/HDD500/collections/Avatar_resources/1080_2022-12-05-07_141670195699.png'<br />
+image_ = Image.open(image_path)<br />
+image_np = np.array(image_)  # Convert Image to NumPy array<br />
+audio_path = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_audio.wav'<br />
+<br />
+image = VideoClip(lambda t: image_np, duration=AudioFileClip(audio_path).duration)<br />
+audio = AudioFileClip(audio_path)<br />
+<br />
+output_file = '/home/jack/Desktop/HDD500/MyTube_AI_Flask_App/sample_data/input_video.mp4'<br />
+video = image.set_audio(audio)<br />
+<br />
+video.write_videofile(output_file, codec='libx264', audio_codec='aac')<br />
+```<br />
+<br />
+By converting the `Image` object to a NumPy array, you can access the shape of the image and create a valid `VideoClip` object.<br />
+<br />

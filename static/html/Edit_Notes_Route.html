@@ -1,0 +1,312 @@
+Edit Notes Route<br />
+user<br />
+#!/home/jack/miniconda3/envs/cloned_base/bin/python<br />
+# filename ---  notes_app<br />
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response, send_file<br />
+import logging<br />
+from logging.handlers import RotatingFileHandler<br />
+<br />
+app = Flask(__name__)<br />
+app.use_static_path = True<br />
+<br />
+# Configure your custom logger before basic logging configuration<br />
+logger = logging.getLogger(__name__)<br />
+logger.setLevel(logging.DEBUG)<br />
+<br />
+# Set the log level for the watchdog library to WARNING<br />
+logging.getLogger('watchdog').setLevel(logging.WARNING)<br />
+<br />
+# Create a formatter for the log messages<br />
+# Log: time, level, message, path ahd line number<br />
+formatter = logging.Formatter(<br />
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')<br />
+<br />
+# Create a file handler to write log messages to a file.<br />
+# If the log file gets over 10000 back it up and start a new app.log<br />
+file_handler = RotatingFileHandler(<br />
+    'Logs/app.log', maxBytes=10000, backupCount=1)<br />
+file_handler.setLevel(logging.DEBUG)<br />
+file_handler.setFormatter(formatter)<br />
+<br />
+# Add the file handler to the logger<br />
+logger.addHandler(file_handler)<br />
+logger.debug("This is line: %d",29)<br />
+<br />
+# Create a stderr handler to write log messages to sys.stderr<br />
+console_handler = logging.StreamHandler()<br />
+class WatchdogFilter(logging.Filter):<br />
+    def filter(self, record):<br />
+        # Filter out logs from the 'watchdog' library with level less than WARNING<br />
+        return not (record.name.startswith('watchdog.') and record.levelno &lt; logging.WARNING)<br />
+<br />
+# Add the filter to your logger<br />
+logger.addFilter(WatchdogFilter())# How do I ?<br />
+# open the file static/text<br />
+otes_app.txt<br />
+# split at the line "----------" <br />
+# SEARCH THE TEXT FOR "uploads"<br />
+# print the results on an html page<br />
+@app.route('<br />
+otes')<br />
+def notes():<br />
+    with open('static/text<br />
+otes_app.txt') as f:<br />
+        text = f.read()<br />
+        #paragraph = text.split('----------')<br />
+        #search the paragraph for "uploads"<br />
+<br />
+    return render_template('note_app_note.html', text=text)<br />
+ # split at the line "----------" and return the second part<br />
+<br />
+@app.route('/', methods=['POST', 'GET'])<br />
+def index():<br />
+    if request.method == 'POST':<br />
+        search_term = request.form.get('search', '').strip()<br />
+        if search_term:<br />
+            with open('static/text<br />
+otes_app.txt', 'r') as f:<br />
+                text = f.read()<br />
+                paragraphs = text.split('----------')<br />
+<br />
+                # Filter paragraphs that contain the search term<br />
+                matching_paragraphs = [p for p in paragraphs if search_term in p]<br />
+<br />
+            if matching_paragraphs:<br />
+                logger.debug("Matching Paragraphs: ", matching_paragraphs)<br />
+                return render_template('notes_app.html', text=matching_paragraphs)<br />
+            else:<br />
+                return render_template('notes_app.html', text=["No matching results."])<br />
+        else:<br />
+            return render_template('notes_app.html', text=["Enter a search term."])<br />
+<br />
+    return render_template('notes_app.html', text=[])<br />
+<br />
+@app.route('/search', methods=['POST', 'GET'])<br />
+def search():<br />
+    if request.method == 'POST':<br />
+        search_term = request.form.get('search', '').strip()<br />
+        if search_term:<br />
+            with open('static/text<br />
+otes_app.txt', 'r') as f:<br />
+                text = f.read()<br />
+                paragraphs = text.split('----------')<br />
+<br />
+                # Filter paragraphs that contain the search term<br />
+                matching_paragraphs = [p for p in paragraphs if search_term in p]<br />
+<br />
+            if matching_paragraphs:<br />
+                logger.debug("Matching Paragraphs: ", matching_paragraphs)<br />
+                return render_template('notes_app.html', text=matching_paragraphs)<br />
+            else:<br />
+                return render_template('notes_app.html', text=["No matching results."])<br />
+        else:<br />
+            return render_template('notes_app.html', text=["Enter a search term."])<br />
+<br />
+    return render_template('notes_app.html', text=[])<br />
+<br />
+# Function to add ten dashes before and after the content<br />
+def format_content(content):<br />
+    separator = '----------\n'  # Define the separator<br />
+    formatted_content = f'{separator}{content.strip()}'  # Add separator before the content<br />
+    return formatted_content<br />
+<br />
+@app.route('/append_notes', methods=['POST', 'GET'])<br />
+def append_notes():<br />
+    if request.method == 'POST':<br />
+        new_content = request.form.get('new_content', '').strip()<br />
+        if new_content:<br />
+            formatted_content = format_content(new_content)  # Format the content<br />
+            with open('static/text<br />
+otes_app.txt', 'a') as f:<br />
+                f.write(formatted_content)<br />
+            render_template('notes_app.html')<br />
+        else:<br />
+            return 'No content to append'<br />
+<br />
+    return render_template('append_notes_app.html')<br />
+<br />
+@app.route('/tree')<br />
+def tree():<br />
+    return render_template('NOTES_APPLICATION_tree.html')<br />
+<br />
+if __name__ == '__main__':<br />
+    print("Starting Python Flask Server For Notes_App \n on port 5200")<br />
+    app.run(debug=True, host='0.0.0.0', port=5200)<br />
+<br />
+I want to view and edit and save static/text<br />
+otes_app.txt<br />
+ChatGPT<br />
+To enable viewing, editing, and saving the file `static/text<br />
+otes_app.txt` through your Flask application, you can create a separate route for handling these operations. Below is an updated version of your Flask application with the added functionality:<br />
+<br />
+```python<br />
+#!/home/jack/miniconda3/envs/cloned_base/bin/python<br />
+# filename ---  notes_app<br />
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response, send_file<br />
+import logging<br />
+from logging.handlers import RotatingFileHandler<br />
+import os<br />
+<br />
+app = Flask(__name__)<br />
+app.use_static_path = True<br />
+<br />
+# Configure your custom logger before basic logging configuration<br />
+logger = logging.getLogger(__name__)<br />
+logger.setLevel(logging.DEBUG)<br />
+<br />
+# Set the log level for the watchdog library to WARNING<br />
+logging.getLogger('watchdog').setLevel(logging.WARNING)<br />
+<br />
+# Create a formatter for the log messages<br />
+# Log: time, level, message, path and line number<br />
+formatter = logging.Formatter(<br />
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')<br />
+<br />
+# Create a file handler to write log messages to a file.<br />
+# If the log file gets over 10000 bytes, back it up and start a new app.log<br />
+file_handler = RotatingFileHandler(<br />
+    'Logs/app.log', maxBytes=10000, backupCount=1)<br />
+file_handler.setLevel(logging.DEBUG)<br />
+file_handler.setFormatter(formatter)<br />
+<br />
+# Add the file handler to the logger<br />
+logger.addHandler(file_handler)<br />
+logger.debug("This is line: %d",29)<br />
+<br />
+# Create a stderr handler to write log messages to sys.stderr<br />
+console_handler = logging.StreamHandler()<br />
+<br />
+class WatchdogFilter(logging.Filter):<br />
+    def filter(self, record):<br />
+        # Filter out logs from the 'watchdog' library with level less than WARNING<br />
+        return not (record.name.startswith('watchdog.') and record.levelno &lt; logging.WARNING)<br />
+<br />
+# Add the filter to your logger<br />
+logger.addFilter(WatchdogFilter())<br />
+<br />
+# Function to read the contents of the notes file<br />
+def read_notes():<br />
+    with open('static/text<br />
+otes_app.txt', 'r') as f:<br />
+        return f.read()<br />
+<br />
+# Function to write contents to the notes file<br />
+def write_notes(content):<br />
+    with open('static/text<br />
+otes_app.txt', 'w') as f:<br />
+        f.write(content)<br />
+<br />
+@app.route('<br />
+otes')<br />
+def notes():<br />
+    text = read_notes()<br />
+    return render_template('note_app_note.html', text=text)<br />
+<br />
+@app.route('/edit_notes', methods=['GET', 'POST'])<br />
+def edit_notes():<br />
+    if request.method == 'POST':<br />
+        content = request.form.get('content', '').strip()<br />
+        write_notes(content)<br />
+        return redirect(url_for('notes'))<br />
+    else:<br />
+        text = read_notes()<br />
+        return render_template('edit_notes.html', text=text)<br />
+<br />
+@app.route('/', methods=['POST', 'GET'])<br />
+def index():<br />
+    if request.method == 'POST':<br />
+        search_term = request.form.get('search', '').strip()<br />
+        if search_term:<br />
+            text = read_notes()<br />
+            paragraphs = text.split('----------')<br />
+<br />
+            # Filter paragraphs that contain the search term<br />
+            matching_paragraphs = [p for p in paragraphs if search_term in p]<br />
+<br />
+            if matching_paragraphs:<br />
+                logger.debug("Matching Paragraphs: ", matching_paragraphs)<br />
+                return render_template('notes_app.html', text=matching_paragraphs)<br />
+            else:<br />
+                return render_template('notes_app.html', text=["No matching results."])<br />
+        else:<br />
+            return render_template('notes_app.html', text=["Enter a search term."])<br />
+<br />
+    return render_template('notes_app.html', text=[])<br />
+<br />
+@app.route('/search', methods=['POST', 'GET'])<br />
+def search():<br />
+    if request.method == 'POST':<br />
+        search_term = request.form.get('search', '').strip()<br />
+        if search_term:<br />
+            text = read_notes()<br />
+            paragraphs = text.split('----------')<br />
+<br />
+            # Filter paragraphs that contain the search term<br />
+            matching_paragraphs = [p for p in paragraphs if search_term in p]<br />
+<br />
+            if matching_paragraphs:<br />
+                logger.debug("Matching Paragraphs: ", matching_paragraphs)<br />
+                return render_template('notes_app.html', text=matching_paragraphs)<br />
+            else:<br />
+                return render_template('notes_app.html', text=["No matching results."])<br />
+        else:<br />
+            return render_template('notes_app.html', text=["Enter a search term."])<br />
+<br />
+    return render_template('notes_app.html', text=[])<br />
+<br />
+# Function to add ten dashes before and after the content<br />
+def format_content(content):<br />
+    separator = '----------\n'  # Define the separator<br />
+    formatted_content = f'{separator}{content.strip()}'  # Add separator before the content<br />
+    return formatted_content<br />
+<br />
+@app.route('/append_notes', methods=['POST', 'GET'])<br />
+def append_notes():<br />
+    if request.method == 'POST':<br />
+        new_content = request.form.get('new_content', '').strip()<br />
+        if new_content:<br />
+            formatted_content = format_content(new_content)  # Format the content<br />
+            with open('static/text<br />
+otes_app.txt', 'a') as f:<br />
+                f.write(formatted_content)<br />
+            render_template('notes_app.html')<br />
+        else:<br />
+            return 'No content to append'<br />
+<br />
+    return render_template('append_notes_app.html')<br />
+<br />
+@app.route('/tree')<br />
+def tree():<br />
+    return render_template('NOTES_APPLICATION_tree.html')<br />
+<br />
+if __name__ == '__main__':<br />
+    print("Starting Python Flask Server For Notes_App \n on port 5200")<br />
+    app.run(debug=True, host='0.0.0.0', port=5200)<br />
+```<br />
+<br />
+In this updated version, I've added a new route `/edit_notes` to handle editing the notes. When you visit this route, it will display the current contents of the `notes_app.txt` file in a form field. After editing, you can submit the form to save the changes back to the file. Make sure to create the corresponding HTML template `edit_notes.html` for this route.<br />
+user<br />
+edit_notes.html<br />
+ChatGPT<br />
+Here's a basic example of the `edit_notes.html` template:<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html lang="en"&gt;<br />
+&lt;head&gt;<br />
+    &lt;meta charset="UTF-8"&gt;<br />
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;<br />
+    &lt;title&gt;Edit Notes&lt;/title&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    &lt;h1&gt;Edit Notes&lt;/h1&gt;<br />
+    &lt;form method="post"&gt;<br />
+        &lt;textarea name="content" rows="10" cols="50"&gt;{{ text }}&lt;/textarea&gt;&lt;br&gt;<br />
+        &lt;input type="submit" value="Save"&gt;<br />
+    &lt;/form&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+```<br />
+<br />
+This template provides a simple form with a textarea where the user can edit the content of the notes. The current content of the notes file is inserted into the textarea using the `{{ text }}` placeholder. When the form is submitted, the edited content will be sent to the server for processing.<br />
+<br />

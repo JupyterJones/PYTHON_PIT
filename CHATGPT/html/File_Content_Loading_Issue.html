@@ -1,0 +1,181 @@
+File Content Loading Issue<br />
+user<br />
+@app.route('/search_files', methods=['GET', 'POST'])<br />
+def search_files():<br />
+    if request.method == 'POST':<br />
+        directory_path = "/static/output_txt_html_json"  # Replace with your actual path<br />
+        search_terms_input = request.form['search_terms']<br />
+        logit(f"Received search terms from the form: {search_terms_input}")<br />
+<br />
+        # Add logging to see the result of the search_text_files function<br />
+        result = search_text_files(directory_path, search_terms_input)<br />
+        logit(f"Search result: {result}")<br />
+<br />
+        return render_template('view_list.html', search_terms=search_terms_input, files=result)<br />
+    #return render_template('search_files.html', search_terms='', files=[])<br />
+    return render_template('search_files.html', search_terms='', files=[])<br />
+I AM TRYING TO SEND files=result to this file<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html&gt;<br />
+<br />
+&lt;head&gt;<br />
+    &lt;title&gt;Edit a Text File&lt;/title&gt;<br />
+    &lt;style&gt;<br />
+        html,<br />
+        body {<br />
+            margin: 0;<br />
+            padding: 1%;<br />
+            height: 100%;<br />
+            font-family: Arial, sans-serif;<br />
+            background-image: url('../static/assets/01-back.jpg');<br />
+            background-repeat: repeat-y;<br />
+            background-size: cover;<br />
+            /* Use 'cover' to make the image cover the entire body */<br />
+            background-position: top;<br />
+        }<br />
+<br />
+        .wrapper {<br />
+            display: flex;<br />
+            flex-direction: column;<br />
+            align-items: center;<br />
+            justify-content: center;<br />
+            min-height: 10vh;<br />
+        }<br />
+<br />
+        .header {<br />
+            width: 100%;<br />
+            padding: 20px;<br />
+            text-align: center;<br />
+        }<br />
+        #logo {<br />
+      position: absolute;<br />
+      /* Position the logo absolutely */<br />
+      top: 5vw;<br />
+      /* Adjust the top distance as needed */<br />
+      left: 2vw;<br />
+      /* Adjust the left distance as needed */<br />
+      max-width: 10vw;<br />
+      /* Set a maximum width for the logo */<br />
+      max-height: 15vw;<br />
+      /* Set a maximum height for the logo */<br />
+  }<br />
+    &lt;/style&gt;<br />
+ <br />
+&lt;/head&gt;<br />
+<br />
+&lt;body&gt;<br />
+    &lt;script&gt;<br />
+        // Fetches the file content and updates the textarea<br />
+        function loadFileContent() {<br />
+            var select = document.getElementById("filename-select");<br />
+            var textarea = document.getElementById("file-content");<br />
+            var selectedFile = select.value;<br />
+<br />
+            if (selectedFile) {<br />
+                fetch(`/get_file_content/${selectedFile}`)<br />
+                    .then(response =&gt; response.text())<br />
+                    .then(content =&gt; {<br />
+                        textarea.value = content;<br />
+                    })<br />
+                    .catch(error =&gt; {<br />
+                        console.error('Error fetching file content:', error);<br />
+                    });<br />
+            } else {<br />
+                textarea.value = "";<br />
+            }<br />
+        }<br />
+<br />
+        // Call the function initially to load content for the selected file<br />
+        loadFileContent();<br />
+    &lt;/script&gt;<br />
+    &lt;div class="wrapper"&gt;&lt;a href="{{ url_for('view_text') }}"&gt;&lt;img id="logo" src="../static/assets/channels4_profile.png" alt="logo"/&gt; &lt;/a&gt;&lt;br/&gt;<br />
+<br />
+        &lt;a href="{{ url_for('search_files') }}"&gt;&lt;img id="logo" src="../static/assets/search.png" alt="logo"/&gt; &lt;/a&gt;<br />
+<br />
+        &lt;form method="POST" action="/edit_file"&gt;<br />
+            &lt;select id="filename-select" name="filename" onchange="loadFileContent()"&gt;<br />
+                {% for filename in files %}<br />
+                &lt;option value="{{ filename }}"&gt;{{ filename }}&lt;/option&gt;<br />
+                {% endfor %}<br />
+            &lt;/select&gt;<br />
+            &lt;br&gt;&lt;br&gt;<br />
+            &lt;textarea id="file-content" name="text" rows="20" cols="80"&gt;&lt;/textarea&gt;<br />
+            &lt;br&gt;&lt;br&gt;<br />
+            &lt;input type="submit" value="Save Changes"&gt;<br />
+        &lt;/form&gt;<br />
+    &lt;/div&gt;<br />
+&lt;/body&gt;<br />
+<br />
+&lt;/html&gt;<br />
+it is sending, i see the files in the list, but when i click the filename it does not load in the textarea<br />
+ChatGPT<br />
+It seems like the issue might be related to the JavaScript function `loadFileContent()` not working as expected. Let's make sure the function is correctly fetching the file content and updating the textarea. Also, let's add some logging to help diagnose the issue. Here's the modified Python code for your Flask route:<br />
+<br />
+```python<br />
+import os  # Add this import at the beginning of your script<br />
+<br />
+@app.route('/search_files', methods=['GET', 'POST'])<br />
+def search_files():<br />
+    if request.method == 'POST':<br />
+        directory_path = "/static/output_txt_html_json"  # Replace with your actual path<br />
+        search_terms_input = request.form['search_terms']<br />
+        logit(f"Received search terms from the form: {search_terms_input}")<br />
+<br />
+        # Add logging to see the result of the search_text_files function<br />
+        result = search_text_files(directory_path, search_terms_input)<br />
+        logit(f"Search result: {result}")<br />
+<br />
+        return render_template('view_list.html', search_terms=search_terms_input, files=result)<br />
+    return render_template('search_files.html', search_terms='', files=[])<br />
+<br />
+@app.route('/get_file_content/&lt;filename&gt;')  # Add this route to fetch file content<br />
+def get_file_content(filename):<br />
+    file_path = os.path.join("/static/output_txt_html_json", filename)<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+<br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return content<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+```<br />
+<br />
+Now, let's update your HTML file to ensure that the `fetch` call is pointing to the correct route:<br />
+<br />
+```html<br />
+&lt;!-- ... (your existing HTML code) ... --&gt;<br />
+<br />
+&lt;script&gt;<br />
+    // Fetches the file content and updates the textarea<br />
+    function loadFileContent() {<br />
+        var select = document.getElementById("filename-select");<br />
+        var textarea = document.getElementById("file-content");<br />
+        var selectedFile = select.value;<br />
+<br />
+        if (selectedFile) {<br />
+            fetch(`/get_file_content/${selectedFile}`)<br />
+                .then(response =&gt; response.text())<br />
+                .then(content =&gt; {<br />
+                    textarea.value = content;<br />
+                    console.log('File content loaded successfully:', content);  // Add logging<br />
+                })<br />
+                .catch(error =&gt; {<br />
+                    console.error('Error fetching file content:', error);<br />
+                });<br />
+        } else {<br />
+            textarea.value = "";<br />
+        }<br />
+    }<br />
+<br />
+    // Call the function initially to load content for the selected file<br />
+    loadFileContent();<br />
+&lt;/script&gt;<br />
+<br />
+&lt;!-- ... (rest of your HTML code) ... --&gt;<br />
+```<br />
+<br />
+These changes should help you diagnose the issue and ensure that the file content is properly loaded into the textarea. If the problem persists, check the browser console for any errors and let me know the details.<br />
+<br />

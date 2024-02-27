@@ -1,0 +1,99 @@
+Video Clips with Sound<br />
+user<br />
+import os<br />
+import random<br />
+import shutil<br />
+import uuid<br />
+from moviepy.editor import VideoFileClip, concatenate_videoclips<br />
+<br />
+def get_random_video_clips(dir_path, num_clips=58, clip_duration=1, target_size=(512, 666), default_fps=30):<br />
+    video_files = []<br />
+    <br />
+    for root, dirs, files in os.walk(dir_path):<br />
+        for file in files:<br />
+            if file.endswith(('.mp4', '.avi', '.mkv')):<br />
+                video_files.append(os.path.join(root, file))<br />
+<br />
+    num_videos = len(video_files)<br />
+    <br />
+    if num_videos &lt; num_clips:<br />
+        print(f"Not enough videos ({num_videos}) in the directory.")<br />
+        return None<br />
+    <br />
+    random_clips = []<br />
+    for _ in range(num_clips):<br />
+        random_video = random.choice(video_files)<br />
+        try:<br />
+            video_clip = VideoFileClip(random_video)<br />
+            duration = video_clip.duration<br />
+            start_time = random.uniform(0, duration - clip_duration)<br />
+            end_time = start_time + clip_duration<br />
+            random_clip = video_clip.subclip(start_time, end_time)<br />
+            random_clip_resized = random_clip.resize(target_size)<br />
+            random_clips.append(random_clip_resized)<br />
+        except Exception as e:<br />
+            print(f"Error processing {random_video}: {e}")<br />
+    <br />
+    # Set the default frame rate for all clips<br />
+    for clip in random_clips:<br />
+        clip.fps = default_fps<br />
+    <br />
+    return random_clips<br />
+------------<br />
+i want only clips that contain sound<br />
+ChatGPT<br />
+Certainly, Jack! Let's modify your code to select only video clips that contain sound. We'll use the `audio` attribute of the `VideoFileClip` to check if a clip has audio. Here's the modified script with detailed explanations and added logging:<br />
+<br />
+```python<br />
+import os<br />
+import random<br />
+import shutil<br />
+import uuid<br />
+from moviepy.editor import VideoFileClip, concatenate_videoclips<br />
+<br />
+import logging<br />
+<br />
+# Set up logging configuration<br />
+logging.basicConfig(filename='video_processing.log', level=logging.DEBUG)<br />
+<br />
+def get_random_video_clips_with_sound(dir_path, num_clips=58, clip_duration=1, target_size=(512, 666), default_fps=30):<br />
+    video_files = []<br />
+    <br />
+    for root, dirs, files in os.walk(dir_path):<br />
+        for file in files:<br />
+            if file.endswith(('.mp4', '.avi', '.mkv')):<br />
+                video_files.append(os.path.join(root, file))<br />
+<br />
+    num_videos = len(video_files)<br />
+    <br />
+    if num_videos &lt; num_clips:<br />
+        logging.warning(f"Not enough videos ({num_videos}) in the directory for the requested number of clips ({num_clips}).")<br />
+<br />
+    random_clips = []<br />
+    for _ in range(num_clips):<br />
+        random_video = random.choice(video_files)<br />
+        try:<br />
+            video_clip = VideoFileClip(random_video)<br />
+<br />
+            # Check if the video clip has audio<br />
+            if video_clip.audio is not None:<br />
+                duration = video_clip.duration<br />
+                start_time = random.uniform(0, duration - clip_duration)<br />
+                end_time = start_time + clip_duration<br />
+                random_clip = video_clip.subclip(start_time, end_time)<br />
+                random_clip_resized = random_clip.resize(target_size)<br />
+                random_clips.append(random_clip_resized)<br />
+            else:<br />
+                logging.info(f"Skipped {random_video} as it does not contain audio.")<br />
+        except Exception as e:<br />
+            logging.error(f"Error processing {random_video}: {e}")<br />
+<br />
+    # Set the default frame rate for all clips<br />
+    for clip in random_clips:<br />
+        clip.fps = default_fps<br />
+    <br />
+    return random_clips<br />
+```<br />
+<br />
+Now, this modified script will select only video clips that contain audio. The log file (`video_processing.log`) will capture information about the processing, including warnings and errors. Feel free to adjust the logging levels as needed for your debugging. Let me know if you have any questions or if there's anything else you'd like to add!<br />
+<br />

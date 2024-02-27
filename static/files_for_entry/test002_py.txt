@@ -1,0 +1,20 @@
+def search_text_files(db_file, search_terms):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+
+    # Split search terms into individual words
+    search_words = search_terms.split()
+
+    # Construct the SQL query dynamically
+    query = "SELECT * FROM text_files WHERE "
+    conditions = []
+    for word in search_words:
+        conditions.append("content LIKE ?")
+    query += " AND ".join(conditions)
+
+    # Execute the query
+    c.execute(query, ['%' + word + '%' for word in search_words])
+    results = c.fetchall()
+
+    conn.close()
+    return results

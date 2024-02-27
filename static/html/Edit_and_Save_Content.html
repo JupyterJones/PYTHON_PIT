@@ -1,0 +1,944 @@
+Edit and Save Content<br />
+user<br />
+@app.route('/view_application')  # Add this route to fetch file content<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+------------------<br />
+how do i make view_application.html  i want to put content into a textara to edit and save<br />
+ChatGPT<br />
+Certainly, Jack! Below is an updated version of your code along with the complete script for the `view_application` route, including the HTML template.<br />
+<br />
+```python<br />
+from flask import Flask, render_template<br />
+import logging<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+# Setup logging<br />
+logging.basicConfig(filename='app.log', level=logging.DEBUG)<br />
+<br />
+def logit(message):<br />
+    logging.info(message)<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run(debug=True)<br />
+```<br />
+<br />
+Now, let's create the `view_application.html` file. This file should be in the "templates" folder within your Flask project directory. If you don't have the "templates" folder, create one.<br />
+<br />
+```html<br />
+&lt;!DOCTYPE html&gt;<br />
+&lt;html lang="en"&gt;<br />
+&lt;head&gt;<br />
+    &lt;meta charset="UTF-8"&gt;<br />
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;<br />
+    &lt;title&gt;Edit Application&lt;/title&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;<br />
+    &lt;h1&gt;Edit Application Content&lt;/h1&gt;<br />
+<br />
+    &lt;form method="POST" action="/save_application"&gt;<br />
+        &lt;label for="content"&gt;Application Content:&lt;/label&gt;&lt;br&gt;<br />
+        &lt;textarea id="content" name="content" rows="10" cols="50"&gt;{{ content }}&lt;/textarea&gt;&lt;br&gt;<br />
+        &lt;input type="submit" value="Save"&gt;<br />
+    &lt;/form&gt;<br />
+&lt;/body&gt;<br />
+&lt;/html&gt;<br />
+```<br />
+<br />
+This HTML template includes a form with a textarea to edit the content. The form sends the data to a new route `/save_application`, which you would need to implement to handle the saving of the edited content. Let me know if you need help with that too, Jack!<br />
+user<br />
+and the save_application<br />
+ChatGPT<br />
+Certainly, Jack! Here's the code for the `/save_application` route along with the necessary adjustments to handle the form submission and save the edited content back to the file:<br />
+<br />
+```python<br />
+from flask import Flask, render_template, request, redirect, url_for<br />
+import logging<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+# Setup logging<br />
+logging.basicConfig(filename='app.log', level=logging.DEBUG)<br />
+<br />
+def logit(message):<br />
+    logging.info(message)<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    logit("Saving application content.")<br />
+    <br />
+    try:<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run(debug=True)<br />
+```<br />
+<br />
+Now, when you submit the form in the `/view_application` route, it will send the edited content to the `/save_application` route, which will then save the content back to the file. If there are any issues, it will log an error. Feel free to test it out, and let me know if you need any further adjustments or explanations!<br />
+user<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    HERE=os.getcwd()+"/App"+str(uuid.uuid4())<br />
+    print(HERE)<br />
+    file_path = "App"<br />
+    shutil.copy("App",HERE)<br />
+    logit("COPY: "+HERE)<br />
+    logit("Saving application content.")<br />
+    try:<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+        return redirect(url_for('view_application'))<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+when I save it, I want to backup the original with a uuid<br />
+ChatGPT<br />
+Certainly, Jack! I've modified the `save_application` route to create a backup of the original file before saving the new content. It uses the `shutil` library to copy the file to a new location with a unique filename based on a UUID.<br />
+<br />
+```python<br />
+from flask import Flask, render_template, request, redirect, url_for<br />
+import logging<br />
+import os<br />
+import shutil<br />
+import uuid<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+# Setup logging<br />
+logging.basicConfig(filename='app.log', level=logging.DEBUG)<br />
+<br />
+def logit(message):<br />
+    logging.info(message)<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    backup_path = os.path.join(os.getcwd(), "Backups", str(uuid.uuid4()))  # Create a 'Backups' folder in your project directory<br />
+    logit(f"Creating backup at: {backup_path}")<br />
+<br />
+    try:<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run(debug=True)<br />
+```<br />
+<br />
+This version of the code creates a backup of the original file in a "Backups" folder within your project directory. The backup file is named with a UUID to make it unique. Make sure to create the "Backups" folder manually in your project directory before running this code.<br />
+<br />
+Feel free to test it out, and let me know if you have any questions or if there's anything else I can help you with!<br />
+user<br />
+i can not find the backup ??<br />
+ChatGPT<br />
+I apologize for the confusion. It seems I made an oversight in my previous response. I see that I didn't account for the case where the "Backups" folder might not exist. Let's make sure the "Backups" folder is created before attempting to create a backup.<br />
+<br />
+Here's the modified code:<br />
+<br />
+```python<br />
+from flask import Flask, render_template, request, redirect, url_for<br />
+import logging<br />
+import os<br />
+import shutil<br />
+import uuid<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+# Setup logging<br />
+logging.basicConfig(filename='app.log', level=logging.DEBUG)<br />
+<br />
+def logit(message):<br />
+    logging.info(message)<br />
+<br />
+def create_backup_folder():<br />
+    backup_folder = os.path.join(os.getcwd(), "Backups")<br />
+    if not os.path.exists(backup_folder):<br />
+        os.makedirs(backup_folder)<br />
+        logit(f"Backup folder created at: {backup_folder}")<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run(debug=True)<br />
+```<br />
+<br />
+Now, this code explicitly checks if the "Backups" folder exists and creates it if not. It should resolve the issue, and the backup file should be created in the "Backups" folder. Please create the "Backups" folder manually in your project directory if it doesn't exist before running the code.<br />
+user<br />
+doesn't that need to be in the static directory ?<br />
+ChatGPT<br />
+You're correct; my apologies for any confusion. In a Flask application, static files, such as backups, are typically stored in the `static` folder. Let's update the code accordingly:<br />
+<br />
+1. Create a `static` folder in your project directory if it doesn't already exist.<br />
+2. Move the "Backups" folder into the `static` folder.<br />
+<br />
+Here's the modified code:<br />
+<br />
+```python<br />
+from flask import Flask, render_template, request, redirect, url_for<br />
+import logging<br />
+import os<br />
+import shutil<br />
+import uuid<br />
+<br />
+app = Flask(__name__)<br />
+<br />
+# Setup logging<br />
+logging.basicConfig(filename='app.log', level=logging.DEBUG)<br />
+<br />
+def logit(message):<br />
+    logging.info(message)<br />
+<br />
+def create_backup_folder():<br />
+    backup_folder = os.path.join(os.getcwd(), "static", "Backups")<br />
+    if not os.path.exists(backup_folder):<br />
+        os.makedirs(backup_folder)<br />
+        logit(f"Backup folder created at: {backup_folder}")<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+<br />
+if __name__ == '__main__':<br />
+    app.run(debug=True)<br />
+```<br />
+<br />
+Now, the "Backups" folder is within the `static` folder, adhering to the typical structure of Flask applications. Ensure you create the `static` folder and move the "Backups" folder into it. This structure is more aligned with Flask conventions.<br />
+user<br />
+#!/home/jack/miniconda3/envs/cloned_base/bin/python<br />
+import sqlite3<br />
+import os<br />
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file<br />
+from time import sleep<br />
+#from mylog import logit, logit2, readlog<br />
+from bs4 import BeautifulSoup<br />
+import glob<br />
+import datetime<br />
+import re<br />
+import random<br />
+import uuid<br />
+app = Flask(__name__, static_url_path='/static')<br />
+<br />
+# Function to log messages<br />
+def logit(message):<br />
+    log_file = "/home/jack/Desktop/flask_conversations/static/output_txt_html_json/AA_log.txt"  # Replace with the actual path to your log file<br />
+    timestamp = datetime.datetime.now().strftime("%A_%b-%d-%Y_%H-%M-%S")<br />
+    with open(log_file, "a") as log:<br />
+        log.write(f"{timestamp}: {message}\n")<br />
+def logit2(logdata):<br />
+    timestamp = datetime.datetime.now().strftime("%A_%b-%d-%Y_%H-%M-%S")<br />
+    Input=open("/home/jack/Desktop/flask_conversations/static/output_txt_html_json/AA_log2.txt","a")<br />
+    Input.write(f"{timestamp}: {logdata}\n")<br />
+    Input.close()<br />
+    return print("mylog2.txt entry: ",logdata)        <br />
+def readlog():<br />
+    Input=open("/home/jack/Desktop/flask_conversations/static/output_txt_html_json/AA_log2.txt","r")<br />
+    logdata=Input.read()<br />
+    # print last entry<br />
+    logdata=logdata.split("\n")<br />
+    logdata=logdata[-1]<br />
+    logit(f"READLOG: {logdata}")<br />
+    Input.close()<br />
+    return logdata<br />
+logit("This is a DEBUG message for mylog.py"+readlog())<br />
+<br />
+def load_html_file(file_path):<br />
+    with open(file_path, "r") as file:<br />
+        html_content = file.read()<br />
+    return html_content<br />
+<br />
+def edit_html_file(file_path, new_content):<br />
+    with open(file_path, "w") as file:<br />
+        file.write(new_content)<br />
+<br />
+def save_html_file(file_path, soup):<br />
+    with open(file_path, "w") as file:<br />
+        file.write(str(soup))<br />
+def choose_html():<br />
+    path = "/home/jack/Desktop/flask_conversations/static/resulting_html/"<br />
+    files = glob.glob(path + "*.html")  # get all files in the directory<br />
+<br />
+    if not files:<br />
+        print("No files found")<br />
+        return None<br />
+    return files<br />
+<br />
+@app.route('/edit_html', methods=['POST', 'GET'])<br />
+def edit_html():<br />
+    path = "/home/jack/Desktop/flask_conversations/static/resulting_html/"<br />
+    <br />
+    if request.method == 'POST':<br />
+        if 'load_file' in request.form:<br />
+            selected_file = request.form['selected_file']<br />
+            file_path = os.path.join(path, selected_file)<br />
+            logit(f"Received request to load file: {file_path}")<br />
+<br />
+            # Load the HTML content from the file<br />
+            html_content = load_html_file(file_path)<br />
+            logit(f"Loaded HTML content: {html_content}")<br />
+<br />
+            # Pass the loaded content to the template<br />
+            return render_template('choose_file.html', files=choose_html(), file_path=file_path, html_content=html_content)<br />
+<br />
+        elif 'edited_content' in request.form:<br />
+            edited_content = request.form['edited_content']<br />
+            file_path = os.path.join(path, request.form['selected_file'])<br />
+<br />
+            # Save the edited HTML content<br />
+            with open(file_path, "w") as file:<br />
+                logit(f"Saving edited content to file: {file_path}")<br />
+                logit(f"Edited content: {edited_content}")<br />
+                file.write(edited_content)<br />
+<br />
+    return render_template('choose_file.html', files=choose_html())<br />
+@app.route('/load_file', methods=['GET'])<br />
+def load_file():<br />
+    path = "/home/jack/Desktop/flask_conversations/static/resulting_html/"<br />
+    selected_file = request.args.get('file')<br />
+    file_path = os.path.join(path, selected_file)<br />
+<br />
+    # Load the HTML content from the file<br />
+    html_content = load_html_file(file_path)<br />
+<br />
+    return jsonify({'html_content': html_content})<br />
+<br />
+<br />
+<br />
+# Example usage:<br />
+file_path = "static/resulting_html/google.html"<br />
+html_content = load_html_file(file_path)<br />
+<br />
+@app.route('/', methods=['GET', 'POST'])<br />
+def index():<br />
+    if request.method == 'POST':<br />
+        search_term = request.form['search_term']<br />
+        logit(f"Received search term from the form: {search_term}")<br />
+        #logging.debug(f"Received search term from the form: {search_term}")<br />
+        return redirect(url_for('search_and_display', search_term=search_term))<br />
+<br />
+    return render_template('index.html')<br />
+<br />
+@app.route('/search/&lt;search_term&gt;')<br />
+def search_and_display(search_term):<br />
+    try:<br />
+        conn = sqlite3.connect('chat_database_html.db')<br />
+        cursor = conn.cursor()<br />
+        rows = cursor.execute("SELECT ROWID,content,text_content FROM files")<br />
+        data = []<br />
+        cnts = 0<br />
+<br />
+        for row in rows:<br />
+            cnts = cnts + 1<br />
+            data.append(row[2])<br />
+<br />
+        # Make a directory for your results<br />
+        results = 'static/resulting_html/'<br />
+<br />
+        # Ensure the output folder exists<br />
+        os.makedirs(results, exist_ok=True)<br />
+<br />
+        filename = search_term.replace(' ', '_')<br />
+        file_path = results + filename + ".html"<br />
+<br />
+        #logging.debug(f"Search term: {search_term}, File path: {file_path}")<br />
+<br />
+        with open(file_path, "w") as Input:<br />
+            STYLE=''' &lt;style&gt;<br />
+    pre {<br />
+        white-space: pre-wrap; /* Allows text to wrap within the pre element */<br />
+        font-family: monospace; /* Choose a monospace font for consistent spacing */<br />
+        background-color: #8ca9f1; /* Set a background color for the pre element */<br />
+        padding: 10px; /* Add some padding for spacing */<br />
+        border: 1px solid #d2ad5d; /* Add a border for separation */<br />
+    }<br />
+&lt;/style&gt;'''<br />
+            Input.write(STYLE)<br />
+            cnt = 0<br />
+            for line in data:<br />
+                if search_term in line:<br />
+                    cnt = cnt + 1<br />
+                    line = line.replace("\\n", "").replace("\n", "")<br />
+                    Input.write(line)<br />
+                    Input.write(f"\n--------- END: {cnt} ----------------------------\n")<br />
+                    if cnt &gt;= 4:<br />
+                        #logging.debug(f"Found and saved {cnt} occurrences of '{search_term}', stopping search.")<br />
+                        break<br />
+<br />
+        #logging.debug(f'File {file_path} created successfully')<br />
+<br />
+        #sleep(5)  # Simulating some processing time<br />
+        #logging.debug('Processing complete, opening the web browser')<br />
+        nsearch = readlog()<br />
+        trak=logit2(f"nsearch: {nsearch}")<br />
+        print('trak: ',trak)<br />
+        #logit('trak: '+trak)<br />
+        return render_template('display.html', file_path=file_path, nsearch_term=search_term, nsearch=search_term)<br />
+<br />
+    except Exception as e:<br />
+        #logging.error(f'An error occurred: {e}')<br />
+        return render_template('error.html', error_message=str(e))<br />
+@app.route('/view_text')<br />
+def view_text():<br />
+    text_files_dir = 'static/output_txt_html_json'<br />
+    text_files = [filename for filename in os.listdir(text_files_dir) if filename.endswith('.txt')]<br />
+    text_files=sorted(text_files, reverse=False)<br />
+    #return render_template('select_file.html', text_files=text_files)<br />
+    return render_template('view2.html', text_files=text_files)<br />
+<br />
+@app.route('/view_text/&lt;filename&gt;')<br />
+def display_text(filename):<br />
+    text_file_path = f'static/output_txt_html_json/{filename}'<br />
+    try:<br />
+        with open(text_file_path, 'r') as file:<br />
+            file_contents = file.read()<br />
+        return render_template('view_text.html', file_contents=file_contents, filename=filename)<br />
+    except FileNotFoundError:<br />
+        return f'Text file {filename} not found.'<br />
+@app.route('/indexapp', methods=['GET', 'POST'])<br />
+def indexapp():<br />
+  <br />
+    if request.method == 'POST':<br />
+        search_term = request.form.get('search_term')<br />
+        logit(f'Searching for files containing: {search_term}')<br />
+<br />
+        # Search for text files in the current directory<br />
+        Text_Directory = "static/output_txt_html_json"<br />
+        txt_files = [os.path.join(Text_Directory, f) for f in os.listdir(Text_Directory) if f.endswith('.txt')]<br />
+<br />
+        # Filter files containing the search term<br />
+        matching_files = [file for file in txt_files if search_term in open(file, 'r').read()]<br />
+<br />
+        logit(f'Found matching files: {matching_files}')<br />
+        logo=random.choice(glob.glob('static/assets/*logo.jpg'))<br />
+        print("LOGO: ",logo)<br />
+        logit(f"LOGO: {logo}")<br />
+        return render_template('indexapp.html', files=matching_files, logo=logo)<br />
+    logo=random.choice(glob.glob('static/assets/*logo.jpg'))  <br />
+<br />
+    logit(f"LOGO: {logo}")<br />
+    return render_template('indexapp.html', files=None, logo=logo)<br />
+<br />
+# ... (your existing imports) ...<br />
+@app.route('/edit_files', methods=['GET', 'POST'])<br />
+def edit_files():<br />
+    filename = request.args.get('filename', '')<br />
+    directory_path = "."<br />
+    PATH = os.getcwd()<br />
+    print("Current Directory:", PATH)<br />
+    full_path = os.path.join(PATH, directory_path, filename)<br />
+<br />
+    print("Requested Filename:", filename)<br />
+    print("Directory Path:", directory_path)<br />
+    print("Full Path:", full_path)<br />
+<br />
+    # Print the list of files in the directory for debugging purposes<br />
+    print("Files in Directory:", os.listdir(directory_path))<br />
+<br />
+    if not os.path.exists(filename):<br />
+        return "File not found", 404<br />
+<br />
+    if request.method == 'POST':<br />
+        content = request.form.get('content')<br />
+        <br />
+        if content is not None:<br />
+            date_str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')<br />
+            new_filename = f"{os.path.splitext(filename)[0]}_{date_str}.txt"<br />
+<br />
+            with open(os.path.join(directory_path, new_filename), 'w') as new_file:<br />
+                new_file.write(content)<br />
+<br />
+            logit(f'File edited and saved as: {new_filename}')<br />
+<br />
+            return send_file(os.path.join(directory_path, new_filename), as_attachment=True)<br />
+<br />
+    with open(full_path, 'r') as file:<br />
+        content = file.read()<br />
+<br />
+    return render_template('edit_files.html', filename=filename, content=content)<br />
+<br />
+<br />
+def search_text_files(directory, search_terms):<br />
+    matching_files = []<br />
+    try:<br />
+        text_files_dir = 'static/output_txt_html_json'<br />
+        text_files = [filename for filename in os.listdir(text_files_dir) if filename.endswith('.txt')]<br />
+        # Use glob to get a list of text files in the specified directory<br />
+        logit(f"NOTICE__directory: {directory}")<br />
+        logit(f"NOTICE__text_files: {text_files}")<br />
+        # Split the search terms into individual words and phrases<br />
+        search_words_phrases = [term.strip() for term in search_terms.split(',')]<br />
+        logit(f"search_words_phrases: {search_words_phrases}")<br />
+<br />
+        for file_name in text_files:<br />
+            # Build the full file path<br />
+            file_path = os.path.join(text_files_dir, file_name)<br />
+<br />
+            # Read the content of each text file<br />
+            logit(f"file_path: {file_path}")<br />
+            with open(file_path, 'r') as file:<br />
+                content = file.read()<br />
+<br />
+<br />
+            # Check if all search terms are present in the file content<br />
+            if all(re.search(rf'\b{re.escape(term)}\b', content, re.IGNORECASE) for term in search_words_phrases):<br />
+                matching_files.append(file_path)<br />
+                logit(f"File '{file_path}' contains all search terms.")<br />
+<br />
+        return matching_files<br />
+<br />
+    except Exception as e:<br />
+        logit(f"An error occurred: {e}")<br />
+        return []<br />
+<br />
+@app.route('/search_files', methods=['GET', 'POST'])<br />
+def search_files():<br />
+    if request.method == 'POST':<br />
+        directory_path = "/static/output_txt_html_json"  # Replace with your actual path<br />
+        search_terms_input = request.form['search_terms']<br />
+        logit(f"Received search terms from the form: {search_terms_input}")<br />
+<br />
+        # Add logging to see the result of the search_text_files function<br />
+        result = search_text_files(directory_path, search_terms_input)<br />
+        logit(f"Search result: {result}")<br />
+<br />
+        return render_template('view_list.html', search_terms=search_terms_input, files=result)<br />
+    return render_template('search_files.html', search_terms='', files=[])<br />
+<br />
+def create_backup_folder():<br />
+    backup_folder = os.path.join(os.getcwd(), "static", "Backups")<br />
+    if not os.path.exists(backup_folder):<br />
+        os.makedirs(backup_folder)<br />
+        logit(f"Backup folder created at: {backup_folder}")<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+@app.route('/get_file_content/&lt;path:filename&gt;')<br />
+def get_file_content(filename):<br />
+    try:<br />
+        file_path = os.path.join('static', 'output_txt_html_json', filename)<br />
+        logit(file_path)<br />
+        with open(file_path, 'r') as file:<br />
+            file_contents = file.read()<br />
+            logit(len(file_contents))<br />
+        return file_contents<br />
+    except FileNotFoundError:<br />
+        return f'Text file {filename} not found.'<br />
+# ... (your existing imports) ...<br />
+<br />
+@app.route('<br />
+ew_snippet', methods=['GET', 'POST'])<br />
+def new_snippet():<br />
+    if request.method == 'POST':<br />
+        content = request.form.get('content')<br />
+<br />
+        if content is not None:<br />
+            # Extract the first line to generate the filename<br />
+            first_line = content.split('\n')[0].strip()<br />
+            filename = f"{first_line.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.txt"<br />
+<br />
+            # Save the content to the new file<br />
+            with open(os.path.join("static/output_txt_html_json", filename), 'w') as new_file:<br />
+                new_file.write(content)<br />
+                new_file.write("\n\n\nPythonSnippet")<br />
+<br />
+            logit(f'New snippet saved as: {filename}')<br />
+<br />
+    return render_template('indexapp.html')<br />
+<br />
+<br />
+if __name__ == '__main__':<br />
+    print("Starting App on port 5200")<br />
+    app.run(debug=True, host='0.0.0.0', port=5200)<br />
+it will not start ?<br />
+ChatGPT<br />
+It seems that there might be an issue with the provided code. Let's go through some troubleshooting steps to identify and resolve the problem:<br />
+<br />
+1. **Check the Console for Errors:**<br />
+   Open your terminal or command prompt, navigate to the directory where your Flask app is located, and run the script. Look for any error messages or exceptions that may be displayed in the console.<br />
+<br />
+2. **Ensure Dependencies are Installed:**<br />
+   Make sure you have all the required dependencies installed. You can install them using the following command in your terminal:<br />
+<br />
+   ```bash<br />
+   pip install flask bs4<br />
+   ```<br />
+<br />
+3. **Check for Typos or Syntax Errors:**<br />
+   Double-check the code for any typos or syntax errors. Python is sensitive to indentation, so ensure that the indentation is consistent.<br />
+<br />
+4. **Run the App in Debug Mode:**<br />
+   Modify the last line of your script to run the app in debug mode:<br />
+<br />
+   ```python<br />
+   if __name__ == '__main__':<br />
+       print("Starting App on port 5200")<br />
+       app.run(debug=True, host='0.0.0.0', port=5200)<br />
+   ```<br />
+<br />
+   Debug mode provides additional information about errors and auto-reloads the server when changes are made.<br />
+<br />
+5. **Check if Port 5200 is Available:**<br />
+   Make sure that port 5200 is not already in use by another application. If it is, you can choose a different port.<br />
+<br />
+After going through these steps, try running the script again and check for any error messages. If there are still issues, please share the error messages or any specific details about the problem you are encountering, and I'll do my best to assist you further.<br />
+user<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+<br />
+@app.route('/view_application')<br />
+def view_application():   <br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+I get indentation error ?<br />
+ChatGPT<br />
+It seems there is an issue with the indentation in your code. Ensure that the indentation is consistent throughout your script. Here's a corrected version of the provided code:<br />
+<br />
+```python<br />
+@app.route('/view_application')<br />
+def view_application():<br />
+    file_path = "App"<br />
+    logit(f"Fetching content for file: {file_path}")<br />
+    <br />
+    try:<br />
+        with open(file_path, 'r') as file:<br />
+            content = file.read()<br />
+        logit(f"File content fetched successfully")<br />
+        return render_template('view_application.html', content=content)<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error fetching file content: {e}")<br />
+        return "Error fetching file content"<br />
+<br />
+@app.route('/save_application', methods=['POST'])<br />
+def save_application():<br />
+    file_path = "App"<br />
+    create_backup_folder()  # Ensure the "Backups" folder exists<br />
+<br />
+    try:<br />
+        # Create a unique backup filename<br />
+        backup_filename = str(uuid.uuid4())<br />
+        backup_path = os.path.join(os.getcwd(), "static", "Backups", backup_filename)<br />
+        logit(f"Creating backup at: {backup_path}")<br />
+<br />
+        # Copy original file to backup location<br />
+        shutil.copy(file_path, backup_path)<br />
+        logit(f"Backup created successfully at: {backup_path}")<br />
+<br />
+        # Save new content to the original file<br />
+        content = request.form.get('content')<br />
+        with open(file_path, 'w') as file:<br />
+            file.write(content)<br />
+        logit("File content saved successfully")<br />
+<br />
+        return redirect(url_for('view_application'))<br />
+<br />
+    except Exception as e:<br />
+        logit(f"Error saving file content: {e}")<br />
+        return "Error saving file content"<br />
+```<br />
+<br />
+Ensure that each block of code within a function or control structure has consistent indentation (typically four spaces or a tab). If you still encounter issues, carefully check and adjust the indentation in the problematic part of your code.<br />
+<br />

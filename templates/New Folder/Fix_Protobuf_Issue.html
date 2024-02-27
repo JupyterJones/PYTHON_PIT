@@ -1,0 +1,121 @@
+Fix Protobuf Issue<br />
+user<br />
+Descriptors cannot not be created directly.<br />
+If this call came from a _pb2.py file, your generated code is out of date and must be regenerated with protoc &gt;= 3.19.0.<br />
+If you cannot immediately regenerate your protos, some other possible workarounds are:<br />
+ 1. Downgrade the protobuf package to 3.20.x or lower.<br />
+ 2. Set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python (but this will use pure-Python parsing and will be much slower).       <br />
+what is the easiest rout to fix this ?<br />
+ChatGPT<br />
+It seems like you're encountering an issue related to the protobuf package. To address this, you can try the following steps:<br />
+<br />
+1. **Upgrade Protobuf Package:**<br />
+   Ensure that you have the latest version of the protobuf package installed. You can upgrade it using the following command:<br />
+<br />
+   ```bash<br />
+   pip install --upgrade protobuf<br />
+   ```<br />
+<br />
+   Make sure you have a version equal to or greater than 3.19.0.<br />
+<br />
+2. **Regenerate Protos:**<br />
+   If upgrading the protobuf package doesn't resolve the issue, you may need to regenerate your protobuf files. If you generated these files from a `.proto` definition, you should use the `protoc` compiler. Ensure you have a version of `protoc` that supports the features you need.<br />
+<br />
+3. **Downgrade Protobuf Package:**<br />
+   If upgrading doesn't work and regenerating is not immediately feasible, you can try downgrading the protobuf package. This might be a temporary solution until you can regenerate your protos.<br />
+<br />
+   ```bash<br />
+   pip install protobuf==3.20.0<br />
+   ```<br />
+<br />
+4. **Set Python Implementation:**<br />
+   As a last resort, you can set the `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` environment variable to "python." Note that this might result in slower performance.<br />
+<br />
+   ```bash<br />
+   export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python<br />
+   ```<br />
+<br />
+   Keep in mind that this is a workaround and not the ideal solution.<br />
+<br />
+Try these steps in the given order, and hopefully, one of them will resolve the issue you're facing. If you encounter any specific problems during these steps, feel free to ask for more assistance.<br />
+user<br />
+I am using jupyter notebook how do I do this <br />
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python<br />
+<br />
+ChatGPT<br />
+In a Jupyter Notebook, you can set environment variables using the `%env` magic command. Here's how you can set the `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` variable to "python" in a Jupyter Notebook cell:<br />
+<br />
+```python<br />
+%env PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python<br />
+```<br />
+<br />
+Just run this cell before you import or use any code that relies on the protobuf package. This will set the environment variable for the duration of the notebook session.<br />
+<br />
+After running this, you can proceed with your code, and the protobuf package will use the specified implementation.<br />
+<br />
+Keep in mind that this is a workaround and may result in slower performance, as mentioned earlier. If you encounter any further issues or have additional questions, feel free to ask!<br />
+user<br />
+from PIL import Image<br />
+import tensorflow as tf<br />
+import tensorflow_hub as hub<br />
+import time<br />
+from tensorflow.python.ops.numpy_ops import np_config<br />
+np_config.enable_numpy_behavior()<br />
+from PIL import Image<br />
+import random<br />
+import os<br />
+<br />
+def prep_content(content):<br />
+    PI = Image.open(content)<br />
+    PI = PI.resize((512,768), Image.NEAREST)<br />
+    CFilename = os.path.basename(content)<br />
+    PI.save("preped_images/Content_"+CFilename)<br />
+    Content_data="preped_images/Content_"+CFilename<br />
+    return Content_data<br />
+    <br />
+def prep_style(style):<br />
+    PI = Image.open(style)<br />
+    PI = PI.resize((512,768), Image.NEAREST)<br />
+    SFilename = os.path.basename(style)<br />
+    PI.save("preped_images/Style_"+SFilename)<br />
+    Style_data="preped_images/Style_"+SFilename<br />
+    return Style_data    <br />
+<br />
+<br />
+path = r"/home/jack/Desktop/HDD500/collections/images/lucy_drop/"<br />
+base_image = random.choice([<br />
+    x for x in os.listdir(path)<br />
+    if os.path.isfile(os.path.join(path, x))<br />
+])<br />
+content=(path+base_image)<br />
+print("content"+path+base_image)<br />
+<br />
+#content = "/home/jack/Pictures/1022362.jpg"<br />
+#content = "/home/jack/Desktop/TENSORFLOW/images/default-file-q4.png"<br />
+<br />
+path = r"/home/jack/Desktop/HDD500/collections/images/butterflies/"<br />
+base_image = random.choice([<br />
+    x for x in os.listdir(path)<br />
+    if os.path.isfile(os.path.join(path, x))<br />
+])<br />
+style=(path+base_image)<br />
+print("style"+path+base_image)<br />
+content_image = load_img(prep_content(content))<br />
+style_image = load_img(prep_style(style))<br />
+print(content_image.size)<br />
+print(style_image.size)<br />
+<br />
+hub_model = hub.load("http://0.0.0.0:8000/Models/magenta_arbitrary-image-stylization-v1-256_2.tar.gz")<br />
+stylized_image = hub_model(tf.constant(content_image), tf.constant(style_image))[0]<br />
+im = tensor_to_image(stylized_image)<br />
+timestr = time.strftime("%Y%m%d-%H%M%S")<br />
+savefile = "images/"+timestr+".jpg"<br />
+im.save(savefile)<br />
+print(im.size)<br />
+im                This works fine:<br />
+I want it turned into a function so I can run it in a loop to generate several images <br />
+ChatGPT<br />
+Sure, I can help you turn this code into a function. Here's a modified version of your code that encapsulates the logic into a function:<br />
+<br />
+<br />
+<br />

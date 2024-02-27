@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Form</title>
+    <style>
+        html,
+        body {
+            background-color: brown;
+            background-image: url('../static/assets/logo.png');
+            background-repeat: repeat-y;
+            background-size: cover;
+            /* Use 'cover' to make the image cover the entire body */
+            background-position: top;
+            /* Image is centered vertically and horizontally at all times */
+            background-position: center center;
+            /* Image doesn't repeat */
+            background-repeat: no-repeat;
+            font-family: Arial, sans-serif;
+            /* Makes the image fixed in the viewport so that it doesn't move when
+            the content height is greater than the image height */
+            background-attachment: fixed;
+
+            font-family: Arial, sans-serif;
+        }
+
+        video {
+            margin: 10px, auto;
+            width: 250px;
+            height: auto;
+        }
+
+
+        .header {
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .columns {
+            display: flex;
+            width: 95%;
+            margin-top: 10px;
+        }
+
+        .column {
+            padding: 5px;
+            margin-left: 10px;
+            margin-right: 10px;
+            box-sizing: border-box;
+        }
+
+        .column.left {
+            width: 50%;
+            border: 1px solid #000;
+        }
+
+        .column.left a {
+
+            font-size: 1.5em;
+        }
+
+        .column.right {
+            margin: 0 auto;
+            /* Center horizontally */
+            width: 50%;
+            border: 1px solid #000;
+            text-align: center;
+            /* Center video vertically */
+        }
+
+        .column.right video {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .note {
+            color: darkgreen;
+            font-size: 26px;
+        }
+
+        p {
+            padding-top: -20px;
+        }
+
+        a {
+            color: rgb(8, 66, 227);
+            font-size: 26px;
+        }
+
+        /* Optional CSS for styling the pre tag */
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+        }
+
+        .wrapper {
+            max-width: 95%;
+            padding: 20px;
+            margin: 0 auto;
+            margin-top: 50px;
+            ;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #a9e0bc;
+        }
+
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+
+        .sticky-header {
+            background-color: brown;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            width: 95%;
+            top: 0;
+            left: 2.5%;
+            z-index: 1000;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+</head>
+
+<body>
+    <header class="sticky-header">
+        <input type="text" placeholder="Enter term or phrase" id="search_input">&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="submit" value="Search for text on this page." id="search_submit"> &nbsp;&nbsp;&nbsp;&nbsp;
+    </header>
+
+    <div class="wrapper">
+
+        <li><a href="{{ url_for('index_insert') }}">Home</a></li>
+        <h1>Search Text Files</h1>
+        <form action="/search_text_files" method="GET">
+            <label for="search_terms">Search Terms:</label>
+            <input type="text" id="search_terms" name="search_terms">
+            <input type="submit" value="Search">
+        </form>
+        <hr>
+        {% if results %}
+        <h2>Search Results:</h2>
+        <ul id="content">
+            {% for result in results %}
+            <li>
+                <strong>Filename:</strong> {{ result[1] }}<br>
+                <strong>Directory:</strong> {{ result[2] }}<br>
+                <strong>Content:</strong><br>
+                <pre id="search_results">{{ result[3] }}</pre>
+            </li>
+            <hr>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <script>
+        jQuery("#search_submit").on("click", function () {
+            var search_str = jQuery("#search_input").val();
+            findString(search_str);
+            return false;
+        });
+
+        var TRange = null;
+
+        function findString(str) {
+            if (parseInt(navigator.appVersion) < 4) return;
+            var strFound;
+            if (window.find) {
+                var original_content = window;
+                strFound = original_content.find(str);
+                if (!strFound) {
+                    strFound = original_content.find(str, 0, 1);
+                    while (original_content.find(str, 0, 1)) continue;
+                }
+                if (strFound) {
+                    var range = window.getSelection().getRangeAt(0);
+                    var span = document.createElement('span');
+                    span.style.backgroundColor = 'red';
+                    span.style.color = 'white';
+                    span.appendChild(document.createTextNode(str));
+                    range.surroundContents(span);
+                }
+            } else if (navigator.appName.indexOf("Microsoft") != -1) {
+                if (TRange != null) {
+                    TRange.collapse(false);
+                    strFound = TRange.findText(str);
+                    if (strFound) TRange.select();
+                }
+                if (TRange == null || strFound == 0) {
+                    TRange = self.document.body.createTextRange();
+                    strFound = TRange.findText(str);
+                    if (strFound) TRange.select();
+                }
+            } else if (navigator.appName == "Opera") {
+                alert("Opera browsers not supported, sorry...")
+                return;
+            }
+            if (!strFound) alert("String '" + str + "' not found!")
+            return;
+        }
+    </script>
+
+</body>
+
+</html>
